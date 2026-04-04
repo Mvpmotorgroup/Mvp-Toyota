@@ -269,9 +269,48 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
   .filters{padding:10px 18px}
 }
 
+
+#loginOverlay{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:var(--bg);z-index:9999;
+  display:flex;align-items:center;justify-content:center;
+}
+#loginBox{
+  background:var(--surface);border:1px solid rgba(255,255,255,.1);
+  border-radius:16px;padding:40px;width:100%;max-width:360px;text-align:center;
+}
+#loginLogo{font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px}
+#loginSub{font-size:13px;color:var(--muted);margin-bottom:28px}
+#loginInput{
+  width:100%;padding:12px 16px;border-radius:8px;
+  background:var(--surface2);border:1px solid rgba(255,255,255,.1);
+  color:var(--text);font-size:15px;text-align:center;letter-spacing:3px;
+  outline:none;margin-bottom:12px;
+}
+#loginInput:focus{border-color:var(--accent)}
+#loginBtn{
+  width:100%;padding:12px;border-radius:8px;background:var(--accent);
+  color:#fff;font-size:15px;font-weight:600;border:none;cursor:pointer;
+}
+#loginBtn:hover{opacity:.9}
+#loginError{color:#f87171;font-size:13px;margin-top:10px;display:none}
+#loginHint{font-size:11px;color:var(--muted);margin-top:16px}
+
 </style>
 </head>
 <body>
+
+<div id="loginOverlay">
+  <div id="loginBox">
+    <div id="loginLogo">MVP Motor Group</div>
+    <div id="loginSub">CDK/DMS &middot; Toyota Dealership</div>
+    <input id="loginInput" type="password" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button id="loginBtn" onclick="doLogin()">Entrar al Dashboard</button>
+    <div id="loginError">&#10007; Contraseña incorrecta</div>
+    <div id="loginHint">Contacta a tu manager si no tienes acceso</div>
+  </div>
+</div>
+
 
 <!-- NAV -->
 <div class="nav">
@@ -1258,6 +1297,28 @@ function applySortToData(data, tab){
     return dir==='asc'?(av-bv):(bv-av);
   });
 }
+
+
+function doLogin(){
+  var pwd = document.getElementById('loginInput').value;
+  if(pwd === 'tumejorjugada26'){
+    document.getElementById('loginOverlay').style.display='none';
+    sessionStorage.setItem('mvp_auth','1');
+    refreshAll();
+  } else {
+    document.getElementById('loginError').style.display='block';
+    document.getElementById('loginInput').value='';
+    document.getElementById('loginInput').focus();
+  }
+}
+
+// Check if already logged in this session
+window.addEventListener('load', function(){
+  if(sessionStorage.getItem('mvp_auth')==='1'){
+    document.getElementById('loginOverlay').style.display='none';
+    refreshAll();
+  }
+});
 
 </script>
 </body>
