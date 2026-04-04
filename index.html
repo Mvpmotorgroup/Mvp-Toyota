@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Dealership Inventory Dashboard</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;--surface:#181c27;--surface2:#1e2333;
+  --border:rgba(255,255,255,0.08);--text:#e8eaf0;--muted:#7b82a0;
+  --accent:#3b82f6;--green:#22c55e;--amber:#f59e0b;--red:#ef4444;--purple:#a78bfa;--teal:#2dd4bf;
+  --font:system-ui,-apple-system,'Segoe UI',sans-serif;--mono:'Courier New',monospace;--radius:10px;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;min-height:100vh}
+/* NAV */
+.nav{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:var(--surface);border-bottom:1px solid var(--border)}
+.nav-logo{display:flex;align-items:center;gap:10px}
+.nav-logo-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px}
+.nav-title{font-size:15px;font-weight:600}
+.nav-sub{font-size:12px;color:var(--muted);margin-top:1px}
+.nav-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.nav-date{font-size:12px;color:var(--muted);background:var(--surface2);padding:6px 12px;border-radius:6px;border:1px solid var(--border)}
+.badge-live{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--green);display:none}
+.dot-live{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.btn-import{display:flex;align-items:center;gap:6px;padding:7px 14px;background:var(--accent);color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
+.btn-import:hover{opacity:.85}
+/* TABS */
+.tabs{display:flex;gap:4px;padding:12px 24px 0;border-bottom:1px solid var(--border);background:var(--surface)}
+.tab{padding:8px 16px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;user-select:none}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+/* LEGEND */
+.legend-bar{display:flex;gap:20px;padding:9px 24px;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}
+.legend-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+/* TAB VIEWS */
+.tab-view{display:none}.tab-view.active{display:block}
+/* FILTERS */
+.filters{display:flex;align-items:center;gap:8px;padding:12px 24px;background:var(--surface2);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.flabel{font-size:12px;color:var(--muted)}
+.fbtn{padding:5px 12px;font-size:12px;font-weight:500;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s}
+.fbtn:hover,.fbtn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.fsep{width:1px;height:18px;background:var(--border);margin:0 4px}
+.search{flex:1;max-width:220px;padding:6px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;font-family:inherit;outline:none}
+.search:focus{border-color:var(--accent)}
+.search::placeholder{color:var(--muted)}
+/* ALERTS */
+.alerts{padding:10px 24px;display:flex;gap:8px;flex-wrap:wrap;min-height:0}
+.alert{display:flex;align-items:center;gap:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:7px;padding:7px 12px;font-size:12px;color:#fca5a5}
+.alert-amber{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);color:#fcd34d}
+.alert-green{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.3);color:#4ade80}
+/* GRIDS */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:14px 24px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:0 24px 14px}
+.g2{display:grid;grid-template-columns:2fr 1fr;gap:14px;padding:0 24px 14px}
+.g2b{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 24px 14px}
+.gpad{padding:0 24px 14px}
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px}
+.card-title{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px}
+.kpi-value{font-size:28px;font-weight:600;letter-spacing:-1px;line-height:1;margin-bottom:5px}
+.kpi-sub{color:var(--muted);font-size:12px}
+/* AGING BARS */
+.arow{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.alabel{font-size:12px;color:var(--muted);width:68px;flex-shrink:0}
+.atrack{flex:1;height:7px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.afill{height:100%;border-radius:4px;transition:width .5s}
+.acount{font-size:12px;font-weight:500;width:28px;text-align:right}
+.apct{font-size:11px;color:var(--muted);width:32px;text-align:right}
+/* CHART CANVAS */
+.chart-wrap{position:relative;width:100%}
+/* TABLE */
+.sec-head{display:flex;align-items:center;justify-content:space-between;padding:0 24px;margin-bottom:7px}
+.sec-title{font-size:13px;font-weight:500}
+.sec-sub{font-size:12px;color:var(--muted)}
+.tbl-wrap{padding:0 24px 24px}
+.tbl-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;color:var(--muted);font-size:11px;font-weight:500;letter-spacing:.5px;text-transform:uppercase;padding:0 10px 9px;border-bottom:1px solid var(--border)}
+.tbl td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(255,255,255,.025)}
+.tbl th.sortable{cursor:pointer;user-select:none}
+.tbl th.sortable:hover{color:var(--text)}
+.tbl th.sort-asc::after{content:' ▲';font-size:9px;color:var(--accent)}
+.tbl th.sort-desc::after{content:' ▼';font-size:9px;color:var(--accent)}
+.tbl th:first-child,.tbl td:first-child{padding-left:18px}
+.tbl th:last-child,.tbl td:last-child{padding-right:18px;text-align:right}
+/* ROW HIGHLIGHTS */
+/* PILLS / BADGES */
+.age-pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
+.age-ok{background:rgba(34,197,94,.15);color:#4ade80}
+.age-warn{background:rgba(245,158,11,.15);color:#fbbf24}
+.age-crit{background:rgba(239,68,68,.15);color:#f87171}
+.type-badge{font-size:11px;padding:2px 8px;border-radius:12px;background:rgba(59,130,246,.12);color:#93c5fd}
+.status-badge{display:inline-block;margin-left:6px;font-size:10px;padding:1px 6px;border-radius:10px;font-weight:500}
+.sb-safety{background:rgba(239,68,68,.2);color:#f87171;border:1px solid rgba(239,68,68,.35)}
+.sb-receipt{background:rgba(245,158,11,.2);color:#fbbf24;border:1px solid rgba(245,158,11,.35)}
+.stock-tag{font-family:var(--mono);font-size:11px;color:var(--muted)}
+/* ACTION BTNS */
+.act-red{padding:3px 9px;font-size:11px;background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3);border-radius:5px;cursor:pointer;font-family:inherit}
+.act-amber{padding:3px 9px;font-size:11px;background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3);border-radius:5px;cursor:pointer;font-family:inherit}
+.act-blue{padding:3px 9px;font-size:11px;background:rgba(59,130,246,.12);color:#93c5fd;border:1px solid rgba(59,130,246,.22);border-radius:5px;cursor:pointer;font-family:inherit}
+/* EMPTY STATE */
+.empty{text-align:center;padding:52px 20px;color:var(--muted)}
+.empty-icon{font-size:38px;margin-bottom:12px}
+.empty-title{font-size:15px;font-weight:500;color:var(--text);margin-bottom:5px}
+.empty-sub{font-size:13px;margin-bottom:18px}
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:680px;max-width:96vw;max-height:92vh;overflow-y:auto;padding:26px;position:relative}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:3px}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:18px}
+.modal-close{position:absolute;top:14px;right:18px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;font-family:inherit;line-height:1}
+.modal-close:hover{color:var(--text)}
+/* DROP ZONE */
+.drop-zone{border:2px dashed rgba(59,130,246,.35);border-radius:9px;padding:22px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:14px}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:rgba(59,130,246,.05)}
+.drop-zone-title{font-size:14px;font-weight:500;margin-bottom:5px}
+.drop-zone-sub{font-size:12px;color:var(--muted)}
+.drop-file-name{font-size:12px;color:var(--green);margin-top:7px;display:none}
+.browse-link{color:var(--accent);cursor:pointer;text-decoration:underline;background:none;border:none;font-size:12px;font-family:inherit;padding:0}
+/* DIVIDER */
+.divider{display:flex;align-items:center;gap:10px;margin:12px 0;font-size:12px;color:var(--muted)}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+/* FORMAT BOX */
+.format-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:13px 15px;margin-bottom:16px}
+.format-title{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.col-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.col-tag{padding:3px 9px;border-radius:20px;font-size:11px;font-family:var(--mono);background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.25)}
+.example-csv{background:#0a0d14;border-radius:7px;padding:11px 13px;font-family:var(--mono);font-size:11px;color:#4ade80;line-height:1.7;overflow-x:auto;white-space:pre;border:1px solid rgba(74,222,128,.15)}
+/* TEXTAREA */
+.csv-area{width:100%;height:150px;background:#0a0d14;border:1px solid var(--border);border-radius:8px;padding:12px;font-family:var(--mono);font-size:12px;color:#e8eaf0;resize:vertical;outline:none;line-height:1.6}
+.csv-area:focus{border-color:var(--accent)}
+.csv-area::placeholder{color:#3b4260}
+/* PARSE RESULT */
+.parse-result{margin-top:10px;padding:9px 13px;border-radius:7px;font-size:13px;display:none}
+.pr-ok{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);color:#4ade80}
+.pr-err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#f87171}
+.pr-warn{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);color:#fbbf24}
+/* PREVIEW */
+.preview-wrap{margin-top:14px;overflow-x:auto;max-height:180px;border:1px solid var(--border);border-radius:8px;display:none}
+.preview-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.preview-tbl th{background:var(--surface2);color:var(--muted);font-size:11px;padding:7px 11px;text-align:left;position:sticky;top:0;border-bottom:1px solid var(--border)}
+.preview-tbl td{padding:6px 11px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text)}
+.preview-tbl tr:last-child td{border-bottom:none}
+/* MODAL ACTIONS */
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+.btn-ghost{padding:7px 16px;background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--muted);font-size:13px;cursor:pointer;font-family:inherit}
+.btn-ghost:hover{border-color:rgba(255,255,255,.2);color:var(--text)}
+.btn-primary{padding:7px 18px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
+.btn-primary:hover{opacity:.85}
+.btn-primary:disabled{opacity:.35;cursor:not-allowed}
+.last-import{font-size:11px;color:var(--muted);padding:4px 9px;background:var(--surface2);border-radius:5px;border:1px solid var(--border);display:none}
+/* FOOTER */
+.footer{padding:12px 24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;color:var(--muted);font-size:11px}
+
+/* ══════════════════ RESPONSIVE / MOBILE ══════════════════ */
+@media (max-width: 768px) {
+  #smGrid{grid-template-columns:1fr!important}
+  /* NAV */
+  .nav{padding:10px 14px;flex-wrap:wrap;gap:8px}
+  .nav-right{gap:7px;flex-wrap:wrap}
+  .nav-date{display:none}
+  .btn-import{padding:6px 10px;font-size:12px}
+  .nav-title{font-size:13px}
+  .nav-sub{font-size:11px}
+
+  /* TABS — horizontal scroll */
+  .tabs{padding:10px 14px 0;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{padding:7px 12px;font-size:12px;white-space:nowrap;flex-shrink:0}
+
+  /* LEGEND */
+  .legend-bar{padding:8px 14px;gap:10px}
+  .legend-item{font-size:11px}
+
+  /* FILTERS */
+  .filters{padding:10px 14px;gap:6px}
+  .fbtn{padding:4px 10px;font-size:11px}
+  .flabel{font-size:11px}
+  .search{max-width:100%;width:100%;margin-top:4px}
+
+  /* ALERTS */
+  .alerts{padding:8px 14px}
+  .alert{font-size:11px;padding:6px 10px}
+
+  /* GRIDS — stack to single column on mobile */
+  .g4{grid-template-columns:1fr 1fr;gap:10px;padding:10px 14px}
+  .g3{grid-template-columns:1fr;gap:10px;padding:0 14px 10px}
+  .g2{grid-template-columns:1fr;gap:10px;padding:0 14px 10px}
+  .g2b{grid-template-columns:1fr;gap:10px;padding:0 14px 10px}
+  .gpad{padding:0 14px 10px}
+
+  /* CARDS */
+  .card{padding:12px 14px}
+  .kpi-value{font-size:22px}
+  .kpi-sub{font-size:11px}
+  .card-title{font-size:10px}
+
+  /* CHARTS */
+  .chart-wrap canvas{max-height:180px}
+
+  /* SECTION HEADS */
+  .sec-head{padding:0 14px;margin-bottom:6px}
+  .sec-title{font-size:12px}
+  .sec-sub{font-size:11px}
+
+  /* TABLES — horizontal scroll */
+  .tbl-wrap{padding:0 14px 20px}
+  .tbl-card{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tbl{min-width:600px}
+  .tbl th{font-size:10px;padding:0 8px 8px}
+  .tbl td{padding:8px;font-size:12px}
+  .tbl th:first-child,.tbl td:first-child{padding-left:12px}
+  .tbl th:last-child,.tbl td:last-child{padding-right:12px}
+
+  /* AGING BARS */
+  .arow{gap:6px}
+  .alabel{width:55px;font-size:11px}
+  .acount{font-size:11px}
+  .apct{font-size:10px}
+
+  /* MODAL */
+  .modal{padding:18px 16px;border-radius:10px}
+  .modal-title{font-size:14px}
+  .modal-sub{font-size:12px}
+  .drop-zone{padding:16px}
+  .drop-zone-title{font-size:13px}
+  .col-tags{gap:4px}
+  .col-tag{font-size:10px;padding:2px 7px}
+  .example-csv{font-size:10px;padding:8px 10px}
+  .csv-area{height:120px;font-size:11px}
+  .modal-actions{gap:8px}
+  .btn-ghost,.btn-primary{padding:6px 14px;font-size:12px}
+
+  /* FOOTER */
+  .footer{padding:10px 14px;font-size:10px;flex-direction:column;gap:3px}
+
+  /* EMPTY STATES */
+  .empty{padding:36px 14px}
+  .empty-icon{font-size:28px}
+  .empty-title{font-size:13px}
+  .empty-sub{font-size:12px}
+}
+
+@media (max-width: 480px) {
+  .btn-import-text{display:none}
+  /* Extra small phones */
+  .g4{grid-template-columns:1fr 1fr}
+  .kpi-value{font-size:20px}
+  .nav-logo-icon{width:26px;height:26px;font-size:13px}
+  .badge-live{display:none}
+  .last-import{font-size:10px;padding:3px 7px}
+}
+
+@media (min-width: 769px) and (max-width:1024px) {
+  /* Tablet */
+  .g4{grid-template-columns:1fr 1fr;gap:12px;padding:12px 18px}
+  .g2{grid-template-columns:1fr;gap:12px;padding:0 18px 12px}
+  .g2b{grid-template-columns:1fr 1fr;gap:12px;padding:0 18px 12px}
+  .gpad{padding:0 18px 12px}
+  .tbl-wrap{padding:0 18px 20px}
+  .sec-head{padding:0 18px}
+  .alerts{padding:8px 18px}
+  .filters{padding:10px 18px}
+}
+
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<div class="nav">
+  <div class="nav-logo">
+    <div class="nav-logo-icon" style="flex-shrink:0">&#9776;</div>
+    <div><div class="nav-title">MVP Motor Group</div><div class="nav-sub">CDK/DMS &middot; Toyota Dealership</div></div>
+  </div>
+  <div class="nav-right">
+    <span class="last-import" id="lastImportBadge"></span>
+    <div class="badge-live" id="syncBadge"><span class="dot-live"></span> Data loaded</div>
+    <div class="nav-date" id="navDate"></div>
+    <button class="btn-import" onclick="openModal()">&#8679; <span class="btn-import-text">Import File</span></button>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('overview',this)">Overview</div>
+  <div class="tab" onclick="switchTab('new',this)">New Vehicles</div>
+  <div class="tab" onclick="switchTab('aging',this)">Aging Report</div>
+  <div class="tab" onclick="switchTab('sellmodel',this)">Sell Model</div>
+</div>
+
+<!-- LEGEND -->
+<div class="legend-bar">
+  <div class="legend-item"><div class="legend-dot" style="background:rgba(239,68,68,.5);border:1px solid rgba(239,68,68,.7)"></div>Safety Campaign &mdash; cannot be sold</div>
+  <div class="legend-item"><div class="legend-dot" style="background:rgba(245,158,11,.5);border:1px solid rgba(245,158,11,.7)"></div>Trade Receipt &mdash; received trade</div>
+  <div class="legend-item"><div class="legend-dot" style="background:rgba(239,68,68,.3);border:1px solid rgba(239,68,68,.5)"></div>90+ days &mdash; price down</div>
+  <div class="legend-item"><div class="legend-dot" style="background:rgba(245,158,11,.3);border:1px solid rgba(245,158,11,.5)"></div>60&ndash;90 days &mdash; review</div>
+</div>
+
+<!-- ═══ TAB: OVERVIEW ═══ -->
+<div class="tab-view active" id="view-overview">
+  <div class="filters">
+    <span class="flabel">AGE</span>
+    <button class="fbtn" onclick="setF('ovAge','0-30',this)">&lt;30d</button>
+    <button class="fbtn" onclick="setF('ovAge','30-60',this)">30&ndash;60d</button>
+    <button class="fbtn" onclick="setF('ovAge','60-90',this)">60&ndash;90d</button>
+    <button class="fbtn" onclick="setF('ovAge','90-9999',this)">90+ &#9888;</button>
+    <div class="fsep"></div>
+    <input class="search" id="ovSearch" placeholder="Search serial / model / VIN" oninput="renderOvTable()"/>
+  </div>
+  <div class="g4">
+    <div class="card"><div class="card-title">Total Units</div><div class="kpi-value" style="color:var(--accent)" id="kpiTotal">—</div><div class="kpi-sub" id="kpiTotalSub">No data</div></div>
+    <div class="card"><div class="card-title">Safety Campaign</div><div class="kpi-value" style="color:var(--red)" id="kpiAvg">—</div><div class="kpi-sub" id="kpiAvgSub">No data</div></div>
+    <div class="card"><div class="card-title">90+ Day Units</div><div class="kpi-value" style="color:var(--red)" id="kpi90">—</div><div class="kpi-sub" id="kpi90Sub">No data</div></div>
+    <div class="card" id="cotdCard" style="border-color:rgba(245,158,11,.35);background:linear-gradient(135deg,var(--surface) 60%,rgba(245,158,11,.06))">
+      <div class="card-title" style="display:flex;align-items:center;gap:6px">&#127775; Car of the Day</div>
+      <div id="cotdModel" style="font-size:16px;font-weight:600;color:var(--amber);margin-bottom:2px;line-height:1.2">—</div>
+      <div id="cotdSub" style="font-size:11px;color:var(--muted);margin-bottom:6px">No data loaded</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span id="cotdDays" style="font-size:11px;padding:2px 8px;border-radius:10px;background:rgba(245,158,11,.15);color:#fbbf24;display:none"></span>
+        <span id="cotdStock" style="font-size:11px;padding:2px 8px;border-radius:10px;background:rgba(59,130,246,.12);color:#93c5fd;font-family:var(--mono);display:none"></span>
+        <span id="cotdColor" style="font-size:11px;padding:2px 8px;border-radius:10px;background:rgba(168,139,250,.12);color:#a78bfa;display:none"></span>
+      </div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Aging Distribution</div>
+      <div style="display:flex;gap:14px;margin-bottom:10px;flex-wrap:wrap">
+        
+      </div>
+      <div class="chart-wrap" style="height:220px"><canvas id="agingChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Aging Buckets</div>
+      <div id="agingBars"><div style="color:var(--muted);font-size:13px;text-align:center;padding:38px 0">Import data to see</div></div>
+    </div>
+  </div>
+  <div class="sec-head"><span class="sec-title" id="ovTitle">Inventory</span><span class="sec-sub" id="ovCount"></span></div>
+  <div class="tbl-wrap">
+    <div class="tbl-card">
+      <div class="empty" id="ovEmpty"><div class="empty-icon">&#128203;</div><div class="empty-title">No data yet</div><div class="empty-sub">Click "Import File" to load your CDK export</div><button class="btn-import" onclick="openModal()">&#8679; <span class="btn-import-text">Import File</span></button></div>
+      <table class="tbl" id="ovTbl" style="display:none"><thead><tr><th>Serial No.</th><th class="sortable" onclick="sortTable('ov','year')">Year &middot; Model</th><th>Ext.</th><th>Invoice</th><th>Total SRP</th><th class="sortable" onclick="sortTable('ov','days')">Days</th><th>Bar</th><th>Action</th></tr></thead><tbody id="ovBody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TAB: NEW VEHICLES ═══ -->
+<div class="tab-view" id="view-new">
+  <div class="filters">
+    <span class="flabel">AGE</span>
+    <button class="fbtn active" onclick="setF('nAge','all',this)">All</button>
+    <button class="fbtn" onclick="setF('nAge','0-30',this)">&lt;30d</button>
+    <button class="fbtn" onclick="setF('nAge','30-60',this)">30&ndash;60d</button>
+    <button class="fbtn" onclick="setF('nAge','60-9999',this)">60+ &#9888;</button>
+    <div class="fsep"></div>
+    <input class="search" id="nSearch" placeholder="Search serial / model / VIN" oninput="renderNTable()"/>
+  </div>
+  <div class="g4">
+    <div class="card"><div class="card-title">New Units</div><div class="kpi-value" style="color:var(--accent)" id="nKpiTotal">—</div><div class="kpi-sub" id="nKpiSub">No data</div></div>
+    <div class="card"><div class="card-title">Avg Days on Lot</div><div class="kpi-value" style="color:var(--amber)" id="nKpiAvg">—</div><div class="kpi-sub" id="nKpiAvgSub">60-day target</div></div>
+    <div class="card"><div class="card-title">60+ Day Units</div><div class="kpi-value" style="color:var(--red)" id="nKpi60">—</div><div class="kpi-sub" id="nKpi60Sub">Floor plan risk</div></div>
+  </div>
+  <div class="g2b">
+    <div class="card"><div class="card-title">Model Mix (4-digit code)</div><div class="chart-wrap" style="height:220px"><canvas id="nMixChart"></canvas></div><div id="nMixLeg" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"></div></div>
+    <div class="card"><div class="card-title">Avg Days by Model</div><div class="chart-wrap" style="height:220px"><canvas id="nDaysChart"></canvas></div></div>
+  </div>
+  <div class="sec-head"><span class="sec-title" id="nTitle">New Vehicles</span><span class="sec-sub" id="nCount"></span></div>
+  <div class="tbl-wrap">
+    <div class="tbl-card">
+      <div class="empty" id="nEmpty"><div class="empty-icon">&#128663;</div><div class="empty-title">No new vehicles</div><div class="empty-sub">Import a file with new inventory</div><button class="btn-import" onclick="openModal()">&#8679; <span class="btn-import-text">Import File</span></button></div>
+      <table class="tbl" id="nTbl" style="display:none"><thead><tr><th>Serial No.</th><th class="sortable" onclick="sortTable('n','year')">Year &middot; Model</th><th>Ext.</th><th>Invoice</th><th>Total SRP</th><th class="sortable" onclick="sortTable('n','days')">Days</th><th>Bar</th><th>Action</th></tr></thead><tbody id="nBody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TAB: AGING REPORT ═══ -->
+<div class="tab-view" id="view-aging">
+  <div class="filters">
+    
+    <div class="fsep"></div>
+    <span class="flabel">THRESHOLD</span>
+    <button class="fbtn" onclick="setF('agMin','60',this)">60+ days</button>
+    <button class="fbtn active" onclick="setF('agMin','90',this)">90+ days</button>
+    <button class="fbtn" onclick="setF('agMin','120',this)">120+ days</button>
+    <div class="fsep"></div>
+    <input class="search" id="agSearch" placeholder="Search serial / model" oninput="renderAgTable()"/>
+  </div>
+  <div class="g4">
+    <div class="card"><div class="card-title">Critical (90+)</div><div class="kpi-value" style="color:var(--red)" id="agKpi90">—</div><div class="kpi-sub" id="agKpi90Sub">Immediate action</div></div>
+    <div class="card"><div class="card-title">Watch (60&ndash;90)</div><div class="kpi-value" style="color:var(--amber)" id="agKpi60">—</div><div class="kpi-sub">Review pricing</div></div>
+    <div class="card"><div class="card-title">Oldest Unit</div><div class="kpi-value" style="color:var(--red);font-size:20px" id="agKpiOldest">—</div><div class="kpi-sub" id="agKpiOldestSub">days on lot</div></div>
+  </div>
+  <div class="gpad">
+    <div class="card"><div class="card-title">Age Distribution</div><div class="chart-wrap" style="height:190px"><canvas id="agHeatChart"></canvas></div></div>
+  </div>
+  <div class="sec-head"><span class="sec-title" id="agTitle">Aged Inventory</span><span class="sec-sub" id="agCount"></span></div>
+  <div class="tbl-wrap">
+    <div class="tbl-card">
+      <div class="empty" id="agEmpty"><div class="empty-icon">&#9200;</div><div class="empty-title">No aged units</div><div class="empty-sub">Import inventory to generate aging report</div><button class="btn-import" onclick="openModal()">&#8679; <span class="btn-import-text">Import File</span></button></div>
+      <table class="tbl" id="agTbl" style="display:none"><thead><tr><th>#</th><th>Serial No.</th><th class="sortable" onclick="sortTable('ag','year')">Year &middot; Model</th><th>Invoice</th><th>Total SRP</th><th class="sortable" onclick="sortTable('ag','days')">Days</th><th>Action</th></tr></thead><tbody id="agBody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ TAB: SELL MODEL ═══ -->
+<div class="tab-view" id="view-sellmodel">
+  <div class="filters">
+    <div class="fsep"></div>
+    <span class="flabel">SORT BY</span>
+    <button class="fbtn active" onclick="setF('smSort','days',this)">Most Aged</button>
+    <button class="fbtn" onclick="setF('smSort','count',this)">Most Units</button>
+    <div class="fsep"></div>
+    <span class="flabel">MIN DAYS</span>
+    <button class="fbtn" onclick="setF('smMin','0',this)">All</button>
+    <button class="fbtn" onclick="setF('smMin','30',this)">30+</button>
+    <button class="fbtn" onclick="setF('smMin','60',this)">60+</button>
+    <button class="fbtn" onclick="setF('smMin','90',this)">90+</button>
+    <div class="fsep"></div>
+    <input class="search" id="smSearch" placeholder="Search model / color" oninput="renderSellModel()"/>
+  </div>
+
+  <div class="alerts" id="smAlerts"></div>
+
+  <!-- KPI cards -->
+  <div class="g4">
+    <div class="card"><div class="card-title">Model/Color Combos</div><div class="kpi-value" style="color:var(--accent)" id="smKpiCombos">—</div><div class="kpi-sub" id="smKpiCombosSub">unique combinations</div></div>
+    <div class="card"><div class="card-title">Oldest Combo</div><div class="kpi-value" style="color:var(--red);font-size:20px" id="smKpiOldest">—</div><div class="kpi-sub" id="smKpiOldestSub">days — top priority</div></div>
+    <div class="card"><div class="card-title">Combos 60+ Days</div><div class="kpi-value" style="color:var(--amber)" id="smKpi60">—</div><div class="kpi-sub">Need attention</div></div>
+    <div class="card"><div class="card-title">Combos 90+ Days</div><div class="kpi-value" style="color:var(--red)" id="smKpi90">—</div><div class="kpi-sub">Price down urgently</div></div>
+  </div>
+
+  <!-- Cards grid -->
+  <div style="padding:0 24px 24px">
+    <div id="smGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">
+      <div class="empty" id="smEmpty" style="grid-column:1/-1">
+        <div class="empty-icon">&#128664;</div>
+        <div class="empty-title">No data yet</div>
+        <div class="empty-sub">Import inventory to see the sell model view</div>
+        <button class="btn-import" onclick="openModal()">&#8679; <span class="btn-import-text">Import File</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer"><span id="footerText">No data loaded &middot; Click "Import File" to get started</span><span>MVP Motor Group v3.0</span></div>
+
+<!-- MODAL -->
+<div class="overlay" id="modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">&#10005;</button>
+    <div class="modal-title">Import CDK Inventory Export</div>
+    <div class="modal-sub">Upload your CSV or Excel file directly from your computer, or paste the data below.</div>
+
+    <!-- DROP ZONE -->
+    <div class="drop-zone" id="dropZone"
+      ondragover="event.preventDefault();this.classList.add('drag-over')"
+      ondragleave="this.classList.remove('drag-over')"
+      ondrop="handleDrop(event)">
+      <input type="file" id="fileInput" accept=".csv,.xlsx,.xls,.txt" style="display:none" onchange="handleFileSelect(this.files[0])"/>
+      <div class="drop-zone-title">&#128196; Drag &amp; drop your file here</div>
+      <div class="drop-zone-sub">Supports CSV, Excel (.xlsx/.xls) &middot; or <button class="browse-link" onclick="document.getElementById('fileInput').click()">browse to upload</button></div>
+      <div class="drop-file-name" id="fileLabel"></div>
+    </div>
+
+    <div class="divider">or paste data manually</div>
+
+    <div class="format-box">
+      <div class="format-title">Expected columns (from your CDK export)</div>
+      <div class="col-tags">
+        <span class="col-tag">Model Name</span><span class="col-tag">Serial No.</span><span class="col-tag">Model</span><span class="col-tag">Ext.</span><span class="col-tag">Yr.</span><span class="col-tag">VIN</span><span class="col-tag">DIS</span><span class="col-tag">Invoice</span><span class="col-tag">Total SRP</span><span class="col-tag">Cmpgn.</span><span class="col-tag">Trade Status</span>
+      </div>
+      <pre class="example-csv">Model Name,Serial No.,Model,Ext.,Yr.,VIN,DIS,Invoice,Total SRP,Cmpgn.,Trade Status
+PRIUS SEDAN,T3065592,1170A,01L0,2026,JTDACAAU3T3065592,171,33140.00,35190.00,Safety Campaign,
+COROLLA LE CVT L4,T3039648,1695C,0089,2026,JTDB4MEE9T3039648,28,26114.00,27730.00,No campaign,Receipt</pre>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+      <span style="font-size:12px;color:var(--muted)">Paste data here:</span>
+      <button onclick="loadSample()" style="background:none;border:none;color:var(--accent);font-size:12px;cursor:pointer;font-family:inherit;padding:0">Load sample data &rarr;</button>
+    </div>
+    <textarea class="csv-area" id="csvInput" placeholder="Paste CSV data here (header row first)..." oninput="validateCSV()"></textarea>
+    <div class="parse-result" id="parseResult"></div>
+    <div class="preview-wrap" id="previewWrap"><table class="preview-tbl" id="previewTbl"></table></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" id="importBtn" onclick="commitImport()" disabled>Import &amp; Refresh Dashboard</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════ STATE ══════════════════ */
+var D=[],PB=[];
+var PRELOADED_DATA=[{"stock": "T3065592", "year": 2026, "make": "Toyota", "model": "1170", "modelFull": "PRIUS SEDAN", "modelCode": "1170A", "type": "New", "color": "01L0", "srp": 35190.0, "invoice": 33140.0, "days": 180, "vin": "JTDACAAU3T3065592", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "T3065994", "year": 2026, "make": "Toyota", "model": "1175", "modelFull": "PRIUS PRIME SEDAN", "modelCode": "1175B", "type": "New", "color": "0089", "srp": 36430.0, "invoice": 34093.58, "days": 114, "vin": "JTDACACU5T3065994", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "T3064745", "year": 2026, "make": "Toyota", "model": "1175", "modelFull": "PRIUS PRIME SEDAN", "modelCode": "1175B", "type": "New", "color": "01M2", "srp": 36430.0, "invoice": 34093.58, "days": 117, "vin": "JTDACACU1T3064745", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "T3066630", "year": 2026, "make": "Toyota", "model": "1175", "modelFull": "PRIUS PRIME SEDAN", "modelCode": "1175B", "type": "New", "color": "01M2", "srp": 36430.0, "invoice": 34093.58, "days": 97, "vin": "JTDACACU5T3066630", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "T3064832", "year": 2026, "make": "Toyota", "model": "1175", "modelFull": "PRIUS PRIME SEDAN", "modelCode": "1175B", "type": "New", "color": "03U5", "srp": 36430.0, "invoice": 34093.58, "days": 118, "vin": "JTDACACU7T3064832", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "T3056489", "year": 2026, "make": "Toyota", "model": "1175", "modelFull": "PRIUS PRIME SEDAN", "modelCode": "1175A", "type": "New", "color": "0089", "srp": 36427.0, "invoice": 34090.33, "days": 118, "vin": "JTDACACU2T3056489", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "T3056968", "year": 2026, "make": "Toyota", "model": "1175", "modelFull": "PRIUS PRIME SEDAN", "modelCode": "1175A", "type": "New", "color": "0089", "srp": 36427.0, "invoice": 34090.33, "days": 157, "vin": "JTDACACU3T3056968", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "T3060704", "year": 2026, "make": "Toyota", "model": "1175", "modelFull": "PRIUS PRIME SEDAN", "modelCode": "1175A", "type": "New", "color": "0089", "srp": 36427.0, "invoice": 34090.33, "days": 118, "vin": "JTDACACU0T3060704", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "T3057925", "year": 2026, "make": "Toyota", "model": "1175", "modelFull": "PRIUS PRIME SEDAN", "modelCode": "1175A", "type": "New", "color": "01L0", "srp": 36427.0, "invoice": 34090.33, "days": 109, "vin": "JTDACACU1T3057925", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "T3061502", "year": 2026, "make": "Toyota", "model": "1175", "modelFull": "PRIUS PRIME SEDAN", "modelCode": "1175A", "type": "New", "color": "0218", "srp": 36427.0, "invoice": 34090.33, "days": 114, "vin": "JTDACACU4T3061502", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "T3055198", "year": 2026, "make": "Toyota", "model": "1175", "modelFull": "PRIUS PRIME SEDAN", "modelCode": "1175A", "type": "New", "color": "05C5", "srp": 36427.0, "invoice": 34090.33, "days": 157, "vin": "JTDACACU8T3055198", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "T3527044", "year": 2026, "make": "Toyota", "model": "1684", "modelFull": "COROLLA SE CVT L4", "modelCode": "1684B", "type": "New", "color": "01K3", "srp": 31670.0, "invoice": 30004.0, "days": 54, "vin": "JTDP4MCE6T3527044", "cmpgn": "No campaign", "trade": "Receipt", "isSafety": false, "isReceipt": true}, {"stock": "T3529317", "year": 2026, "make": "Toyota", "model": "1685", "modelFull": "COROLLA XSE CVT L4", "modelCode": "1685C", "type": "New", "color": "0089", "srp": 34830.0, "invoice": 32971.0, "days": 10, "vin": "JTDT4MCE5T3529317", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3529100", "year": 2026, "make": "Toyota", "model": "1685", "modelFull": "COROLLA XSE CVT L4", "modelCode": "1685C", "type": "New", "color": "0218", "srp": 34830.0, "invoice": 32971.0, "days": 27, "vin": "JTDT4MCE2T3529100", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3130264", "year": 2026, "make": "Toyota", "model": "1692", "modelFull": "COROLLA HYBRID 4DR LE HYBRID CVT", "modelCode": "1692B", "type": "New", "color": "01F7", "srp": 30555.0, "invoice": 29183.0, "days": 82, "vin": "JTDBCMFE6T3130264", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3129674", "year": 2026, "make": "Toyota", "model": "1692", "modelFull": "COROLLA HYBRID 4DR LE HYBRID CVT", "modelCode": "1692B", "type": "New", "color": "03T3", "srp": 30555.0, "invoice": 29183.0, "days": 82, "vin": "JTDBCMFE9T3129674", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3113503", "year": 2026, "make": "Toyota", "model": "1692", "modelFull": "COROLLA HYBRID 4DR LE HYBRID CVT", "modelCode": "1692A", "type": "New", "color": "01K3", "srp": 30555.0, "invoice": 29182.0, "days": 146, "vin": "JTDBCMFE1T3113503", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3117198", "year": 2026, "make": "Toyota", "model": "1692", "modelFull": "COROLLA HYBRID 4DR LE HYBRID CVT", "modelCode": "1692A", "type": "New", "color": "01K3", "srp": 30555.0, "invoice": 29182.0, "days": 146, "vin": "JTDBCMFE9T3117198", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3112714", "year": 2026, "make": "Toyota", "model": "1692", "modelFull": "COROLLA HYBRID 4DR LE HYBRID CVT", "modelCode": "1692A", "type": "New", "color": "01L7", "srp": 30555.0, "invoice": 29182.0, "days": 131, "vin": "JTDBCMFE9T3112714", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3132122", "year": 2026, "make": "Toyota", "model": "1693", "modelFull": "COROLLA HYBRID 4DR SE HYBRID CVT", "modelCode": "1693B", "type": "New", "color": "01L7", "srp": 34035.0, "invoice": 32456.0, "days": 41, "vin": "JTDBCMFE7T3132122", "cmpgn": "No campaign", "trade": "Receipt", "isSafety": false, "isReceipt": true}, {"stock": "T3039648", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695C", "type": "New", "color": "0089", "srp": 27730.0, "invoice": 26114.0, "days": 37, "vin": "JTDB4MEE9T3039648", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3040084", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695C", "type": "New", "color": "0089", "srp": 27730.0, "invoice": 26114.0, "days": 27, "vin": "JTDB4MEE5T3040084", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3040642", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695C", "type": "New", "color": "0089", "srp": 27730.0, "invoice": 26114.0, "days": 12, "vin": "JTDB4MEE2T3040642", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3040675", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695C", "type": "New", "color": "0089", "srp": 27730.0, "invoice": 26114.0, "days": 10, "vin": "JTDB4MEE6T3040675", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3040784", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695C", "type": "New", "color": "0089", "srp": 27730.0, "invoice": 26114.0, "days": 12, "vin": "JTDB4MEE0T3040784", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3040350", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695C", "type": "New", "color": "01F7", "srp": 27730.0, "invoice": 26114.0, "days": 25, "vin": "JTDB4MEE0T3040350", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3040857", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695C", "type": "New", "color": "01L7", "srp": 27730.0, "invoice": 26114.0, "days": 12, "vin": "JTDB4MEE1T3040857", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3041452", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695C", "type": "New", "color": "01L7", "srp": 27730.0, "invoice": 26114.0, "days": 9, "vin": "JTDB4MEE2T3041452", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3041614", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695C", "type": "New", "color": "01L7", "srp": 27730.0, "invoice": 26114.0, "days": 12, "vin": "JTDB4MEE2T3041614", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3040706", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695C", "type": "New", "color": "0218", "srp": 27730.0, "invoice": 26114.0, "days": 12, "vin": "JTDB4MEE2T3040706", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3040872", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695C", "type": "New", "color": "03T3", "srp": 27730.0, "invoice": 26114.0, "days": 12, "vin": "JTDB4MEE8T3040872", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3038766", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695B", "type": "New", "color": "0040", "srp": 27490.0, "invoice": 25889.0, "days": 39, "vin": "JTDB4MEEXT3038766", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3038921", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695B", "type": "New", "color": "0040", "srp": 27490.0, "invoice": 25889.0, "days": 40, "vin": "JTDB4MEE7T3038921", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3037884", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695B", "type": "New", "color": "01F7", "srp": 27490.0, "invoice": 25889.0, "days": 67, "vin": "JTDB4MEE0T3037884", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3037970", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695B", "type": "New", "color": "01F7", "srp": 27490.0, "invoice": 25889.0, "days": 67, "vin": "JTDB4MEE4T3037970", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TU224125", "year": 2026, "make": "Toyota", "model": "2613", "modelFull": "CAMRY XSE HYBRID SEDAN", "modelCode": "2613A", "type": "New", "color": "01L7", "srp": 51010.0, "invoice": 48348.0, "days": 144, "vin": "4T1DAACK6TU224125", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "T3036462", "year": 2026, "make": "Toyota", "model": "4061", "modelFull": "CROWN SIGNIA LIMITED", "modelCode": "4061A", "type": "New", "color": "0090", "srp": 63630.0, "invoice": 59635.0, "days": 80, "vin": "JTDACAAJ2T3036462", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TW015788", "year": 2026, "make": "Toyota", "model": "4366", "modelFull": "RAV4 HYBRID LIMITED AWD SUV", "modelCode": "4366B", "type": "New", "color": "0089", "srp": 56930.0, "invoice": 54890.0, "days": 3, "vin": "2T36CRAV9TW015788", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TW003153", "year": 2026, "make": "Toyota", "model": "4385", "modelFull": "RAV4 HYBRID XSE AWD SUV", "modelCode": "4385A", "type": "New", "color": "0218", "srp": 53120.0, "invoice": 51219.0, "days": 10, "vin": "2T36CRAV5TW003153", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TW002577", "year": 2026, "make": "Toyota", "model": "4385", "modelFull": "RAV4 HYBRID XSE AWD SUV", "modelCode": "4385A", "type": "New", "color": "0218", "srp": 53120.0, "invoice": 51219.0, "days": 8, "vin": "2T36CRAV8TW002577", "cmpgn": "No campaign", "trade": "Receipt", "isSafety": false, "isReceipt": true}, {"stock": "TW014272", "year": 2026, "make": "Toyota", "model": "4386", "modelFull": "RAV4 HYBRID WOODLAND EDITION", "modelCode": "4386B", "type": "New", "color": "06X7", "srp": 48340.0, "invoice": 46920.0, "days": 1, "vin": "2T36CRAV2TW014272", "cmpgn": "No campaign", "trade": "Receipt", "isSafety": false, "isReceipt": true}, {"stock": "TS308179", "year": 2026, "make": "Toyota", "model": "5190", "modelFull": "SIENNA CE CE FWD 7 PASSENGER", "modelCode": "5190B", "type": "New", "color": "0040", "srp": 51730.0, "invoice": 49014.0, "days": 12, "vin": "5TDKRKEC5TS308179", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T8077775", "year": 2026, "make": "Toyota", "model": "6355", "modelFull": "GR86 2+2 COUPE 6 SPD A/T", "modelCode": "6355B", "type": "New", "color": "0DCK", "srp": 41050.0, "invoice": 39624.0, "days": 4, "vin": "JF1ZNBE10T8077775", "cmpgn": "No campaign", "trade": "Receipt", "isSafety": false, "isReceipt": true}, {"stock": "T3257501", "year": 2026, "make": "Toyota", "model": "6371", "modelFull": "COROLLA 5-DOOR HATCHBACK", "modelCode": "6371B", "type": "New", "color": "0089", "srp": 27545.0, "invoice": 26569.0, "days": 102, "vin": "JTND4MBE5T3257501", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3255768", "year": 2026, "make": "Toyota", "model": "6372", "modelFull": "COROLLA 5-DOOR HATCHBACK", "modelCode": "6372A", "type": "New", "color": "01F7", "srp": 31790.0, "invoice": 30747.0, "days": 131, "vin": "JTNC4MBE8T3255768", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3255487", "year": 2026, "make": "Toyota", "model": "6372", "modelFull": "COROLLA 5-DOOR HATCHBACK", "modelCode": "6372A", "type": "New", "color": "01G3", "srp": 31790.0, "invoice": 30747.0, "days": 150, "vin": "JTNC4MBE0T3255487", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "S3251939", "year": 2025, "make": "Toyota", "model": "6372", "modelFull": "COROLLA 5-DOOR HATCHBACK", "modelCode": "6372D", "type": "New", "color": "08W7", "srp": 31230.0, "invoice": 30205.0, "days": 208, "vin": "JTNC4MBE2S3251939", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3258017", "year": 2026, "make": "Toyota", "model": "6373", "modelFull": "COROLLA 5-DOOR HATCHBACK", "modelCode": "6373C", "type": "New", "color": "0040", "srp": 32265.0, "invoice": 31201.0, "days": 52, "vin": "JTND4MBE5T3258017", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3258068", "year": 2026, "make": "Toyota", "model": "6373", "modelFull": "COROLLA 5-DOOR HATCHBACK", "modelCode": "6373C", "type": "New", "color": "04Y8", "srp": 32265.0, "invoice": 31202.0, "days": 52, "vin": "JTND4MBE0T3258068", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3258504", "year": 2026, "make": "Toyota", "model": "6373", "modelFull": "COROLLA 5-DOOR HATCHBACK", "modelCode": "6373C", "type": "New", "color": "04Y8", "srp": 32265.0, "invoice": 31202.0, "days": 52, "vin": "JTND4MBE5T3258504", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TA023633", "year": 2026, "make": "Toyota", "model": "6375", "modelFull": "GR COROLLA CORE 5DR HATCHBACK", "modelCode": "6375A", "type": "New", "color": "0040", "srp": 53895.0, "invoice": 51735.0, "days": 95, "vin": "JTNABAAE8TA023633", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV185156", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380C", "type": "New", "color": "0089", "srp": 30235.0, "invoice": 29388.0, "days": 18, "vin": "7MUAAAAG7TV185156", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV184767", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380C", "type": "New", "color": "0089", "srp": 30235.0, "invoice": 29388.0, "days": 18, "vin": "7MUAAAAG9TV184767", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV183169", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380C", "type": "New", "color": "0D10", "srp": 30235.0, "invoice": 29388.0, "days": 25, "vin": "7MUAAAAG6TV183169", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV183486", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380C", "type": "New", "color": "0D10", "srp": 30235.0, "invoice": 29388.0, "days": 25, "vin": "7MUAAAAG7TV183486", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV170038", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380B", "type": "New", "color": "0089", "srp": 30125.0, "invoice": 29281.0, "days": 52, "vin": "7MUAAAAG3TV170038", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV169859", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380B", "type": "New", "color": "0089", "srp": 30125.0, "invoice": 29281.0, "days": 41, "vin": "7MUAAAAG5TV169859", "cmpgn": "No campaign", "trade": "Receipt", "isSafety": false, "isReceipt": true}, {"stock": "TV169940", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380B", "type": "New", "color": "0089", "srp": 30125.0, "invoice": 29281.0, "days": 108, "vin": "7MUAAAAGXTV169940", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV180464", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380B", "type": "New", "color": "0089", "srp": 30125.0, "invoice": 29281.0, "days": 37, "vin": "7MUAAAAG4TV180464", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV170106", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380B", "type": "New", "color": "0D10", "srp": 30125.0, "invoice": 29281.0, "days": 95, "vin": "7MUAAAAG5TV170106", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV170189", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380B", "type": "New", "color": "0D10", "srp": 30125.0, "invoice": 29281.0, "days": 95, "vin": "7MUAAAAG2TV170189", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV166008", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380B", "type": "New", "color": "0D10", "srp": 30125.0, "invoice": 29281.0, "days": 115, "vin": "7MUAAAAG7TV166008", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV167634", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380B", "type": "New", "color": "0D10", "srp": 30125.0, "invoice": 29281.0, "days": 109, "vin": "7MUAAAAG4TV167634", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV168081", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380B", "type": "New", "color": "0D10", "srp": 30125.0, "invoice": 29281.0, "days": 114, "vin": "7MUAAAAG5TV168081", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV177151", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380B", "type": "New", "color": "0D10", "srp": 30125.0, "invoice": 29281.0, "days": 60, "vin": "7MUAAAAG1TV177151", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV160814", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380A", "type": "New", "color": "0089", "srp": 29790.0, "invoice": 28955.0, "days": 158, "vin": "7MUAAAAG4TV160814", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV159919", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380A", "type": "New", "color": "01K3", "srp": 29790.0, "invoice": 28955.0, "days": 164, "vin": "7MUAAAAG2TV159919", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV156856", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380A", "type": "New", "color": "01K3", "srp": 29790.0, "invoice": 28955.0, "days": 144, "vin": "7MUAAAAG0TV156856", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV157353", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380A", "type": "New", "color": "01K3", "srp": 29790.0, "invoice": 28955.0, "days": 166, "vin": "7MUAAAAG1TV157353", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV155821", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380A", "type": "New", "color": "0D10", "srp": 29790.0, "invoice": 28955.0, "days": 158, "vin": "7MUAAAAG9TV155821", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV158929", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380A", "type": "New", "color": "0D10", "srp": 29790.0, "invoice": 28955.0, "days": 166, "vin": "7MUAAAAG0TV158929", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV157914", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380A", "type": "New", "color": "0D10", "srp": 29790.0, "invoice": 28955.0, "days": 54, "vin": "7MUAAAAG4TV157914", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV160539", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380A", "type": "New", "color": "0D10", "srp": 29790.0, "invoice": 28955.0, "days": 158, "vin": "7MUAAAAG8TV160539", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV168958", "year": 2026, "make": "Toyota", "model": "6381", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6381B", "type": "New", "color": "01K3", "srp": 33460.0, "invoice": 32313.0, "days": 97, "vin": "7MUCAAAG1TV168958", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV169684", "year": 2026, "make": "Toyota", "model": "6381", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6381B", "type": "New", "color": "08W2", "srp": 33460.0, "invoice": 32313.0, "days": 114, "vin": "7MUCAAAG6TV169684", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV158282", "year": 2026, "make": "Toyota", "model": "6381", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6381A", "type": "New", "color": "0D10", "srp": 33120.0, "invoice": 31984.0, "days": 170, "vin": "7MUCAAAG8TV158282", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV165936", "year": 2026, "make": "Toyota", "model": "6381", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6381A", "type": "New", "color": "0D10", "srp": 33120.0, "invoice": 31984.0, "days": 123, "vin": "7MUCAAAG9TV165936", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV187755", "year": 2026, "make": "Toyota", "model": "6382", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6382C", "type": "New", "color": "0089", "srp": 37910.0, "invoice": 36585.0, "days": 5, "vin": "7MUDAAAGXTV187755", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV091624", "year": 2026, "make": "Toyota", "model": "6390", "modelFull": "COROLLA CROSS SUV HV S", "modelCode": "6390A", "type": "New", "color": "0089", "srp": 34345.0, "invoice": 33538.0, "days": 20, "vin": "7MUFBABG2TV091624", "cmpgn": "No campaign", "trade": "Receipt", "isSafety": false, "isReceipt": true}, {"stock": "TV094999", "year": 2026, "make": "Toyota", "model": "6390", "modelFull": "COROLLA CROSS SUV HV S", "modelCode": "6390A", "type": "New", "color": "0D10", "srp": 34345.0, "invoice": 33538.0, "days": 164, "vin": "7MUFBABG5TV094999", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "TV096021", "year": 2026, "make": "Toyota", "model": "6391", "modelFull": "COROLLA CROSS SUV HV SE", "modelCode": "6391A", "type": "New", "color": "0D10", "srp": 37325.0, "invoice": 36193.0, "days": 158, "vin": "7MUFBABG8TV096021", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "TS043131", "year": 2026, "make": "Toyota", "model": "7041", "modelFull": "GRAND HIGHLANDER 2WD WAGON XLE", "modelCode": "7041B", "type": "New", "color": "01J9", "srp": 53165.0, "invoice": 51128.0, "days": 12, "vin": "5TDAAAA54TS043131", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TS095268", "year": 2026, "make": "Toyota", "model": "7053", "modelFull": "GRAND HIGHLANDER HV NIGHTSHADE", "modelCode": "7053B", "type": "New", "color": "0218", "srp": 68195.0, "invoice": 65830.0, "days": 5, "vin": "5TDACAB54TS095268", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT046225", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302B", "type": "New", "color": "01J9", "srp": 37540.0, "invoice": 36403.0, "days": 18, "vin": "3TYKD5HNXTT046225", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT046194", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302B", "type": "New", "color": "01L7", "srp": 37540.0, "invoice": 36403.0, "days": 19, "vin": "3TYKD5HN3TT046194", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT046585", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302B", "type": "New", "color": "01L7", "srp": 37540.0, "invoice": 36403.0, "days": 18, "vin": "3TYKD5HN7TT046585", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT046986", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302B", "type": "New", "color": "01L7", "srp": 37540.0, "invoice": 36403.0, "days": 19, "vin": "3TYKD5HN3TT046986", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT042908", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302A", "type": "New", "color": "0040", "srp": 37450.0, "invoice": 36315.0, "days": 39, "vin": "3TYKD5HN7TT042908", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT043774", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302A", "type": "New", "color": "0040", "srp": 37450.0, "invoice": 36315.0, "days": 43, "vin": "3TYKD5HN6TT043774", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT044713", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302A", "type": "New", "color": "0040", "srp": 37450.0, "invoice": 36315.0, "days": 39, "vin": "3TYKD5HN2TT044713", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT044209", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302A", "type": "New", "color": "0040", "srp": 37450.0, "invoice": 36315.0, "days": 43, "vin": "3TYKD5HN2TT044209", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT041745", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302A", "type": "New", "color": "01J9", "srp": 37450.0, "invoice": 36315.0, "days": 45, "vin": "3TYKD5HN0TT041745", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT041889", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302A", "type": "New", "color": "01J9", "srp": 37450.0, "invoice": 36315.0, "days": 45, "vin": "3TYKD5HN2TT041889", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT040446", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302A", "type": "New", "color": "01L7", "srp": 37450.0, "invoice": 36315.0, "days": 39, "vin": "3TYKD5HN7TT040446", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT041422", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302A", "type": "New", "color": "01L7", "srp": 37450.0, "invoice": 36315.0, "days": 45, "vin": "3TYKD5HN9TT041422", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT041655", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302A", "type": "New", "color": "01L7", "srp": 37450.0, "invoice": 36315.0, "days": 43, "vin": "3TYKD5HNXTT041655", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT042801", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302A", "type": "New", "color": "01L7", "srp": 37450.0, "invoice": 36315.0, "days": 40, "vin": "3TYKD5HN0TT042801", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT025841", "year": 2026, "make": "Toyota", "model": "7303", "modelFull": "TACOMA SR 4X4 DOUBLE CAB", "modelCode": "7303B", "type": "New", "color": "0040", "srp": 41100.0, "invoice": 39972.0, "days": 19, "vin": "3TYLD5KN8TT025841", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT023590", "year": 2026, "make": "Toyota", "model": "7303", "modelFull": "TACOMA SR 4X4 DOUBLE CAB", "modelCode": "7303A", "type": "New", "color": "0040", "srp": 41010.0, "invoice": 39884.0, "days": 45, "vin": "3TYLD5KNXTT023590", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT023927", "year": 2026, "make": "Toyota", "model": "7303", "modelFull": "TACOMA SR 4X4 DOUBLE CAB", "modelCode": "7303A", "type": "New", "color": "0040", "srp": 41010.0, "invoice": 39884.0, "days": 45, "vin": "3TYLD5KN8TT023927", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT036751", "year": 2026, "make": "Toyota", "model": "7304", "modelFull": "TACOMA SPORT 4X2 D CAB SR5", "modelCode": "7304B", "type": "New", "color": "01L7", "srp": 46785.0, "invoice": 44816.0, "days": 19, "vin": "3TYKB5FN2TT036751", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT036334", "year": 2026, "make": "Toyota", "model": "7304", "modelFull": "TACOMA SPORT 4X2 D CAB SR5", "modelCode": "7304B", "type": "New", "color": "04Z2", "srp": 46785.0, "invoice": 44816.0, "days": 12, "vin": "3TYKB5FN8TT036334", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT032671", "year": 2026, "make": "Toyota", "model": "7304", "modelFull": "TACOMA SPORT 4X2 D CAB SR5", "modelCode": "7304A", "type": "New", "color": "0089", "srp": 46685.0, "invoice": 44717.0, "days": 24, "vin": "3TYKB5FN6TT032671", "cmpgn": "No campaign", "trade": "Receipt", "isSafety": false, "isReceipt": true}, {"stock": "TT032349", "year": 2026, "make": "Toyota", "model": "7304", "modelFull": "TACOMA SPORT 4X2 D CAB SR5", "modelCode": "7304A", "type": "New", "color": "01L7", "srp": 46685.0, "invoice": 44717.0, "days": 12, "vin": "3TYKB5FN1TT032349", "cmpgn": "No campaign", "trade": "Receipt", "isSafety": false, "isReceipt": true}, {"stock": "TT030954", "year": 2026, "make": "Toyota", "model": "7304", "modelFull": "TACOMA SPORT 4X2 D CAB SR5", "modelCode": "7304A", "type": "New", "color": "01L7", "srp": 46685.0, "invoice": 44717.0, "days": 19, "vin": "3TYKB5FN8TT030954", "cmpgn": "No campaign", "trade": "Receipt", "isSafety": false, "isReceipt": true}, {"stock": "TT033234", "year": 2026, "make": "Toyota", "model": "7304", "modelFull": "TACOMA SPORT 4X2 D CAB SR5", "modelCode": "7304A", "type": "New", "color": "04Z2", "srp": 46685.0, "invoice": 44717.0, "days": 45, "vin": "3TYKB5FN0TT033234", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT036331", "year": 2026, "make": "Toyota", "model": "7309", "modelFull": "TACOMA SR5 4X2 DBL CAB", "modelCode": "7309B", "type": "New", "color": "08X0", "srp": 42510.0, "invoice": 41079.0, "days": 19, "vin": "3TYKB5FN2TT036331", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT036592", "year": 2026, "make": "Toyota", "model": "7309", "modelFull": "TACOMA SR5 4X2 DBL CAB", "modelCode": "7309B", "type": "New", "color": "08X0", "srp": 42510.0, "invoice": 41079.0, "days": 19, "vin": "3TYKB5FN8TT036592", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT035070", "year": 2026, "make": "Toyota", "model": "7309", "modelFull": "TACOMA SR5 4X2 DBL CAB", "modelCode": "7309A", "type": "New", "color": "08X0", "srp": 42145.0, "invoice": 40725.0, "days": 43, "vin": "3TYKB5FN6TT035070", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT035698", "year": 2026, "make": "Toyota", "model": "7309", "modelFull": "TACOMA SR5 4X2 DBL CAB", "modelCode": "7309A", "type": "New", "color": "08X0", "srp": 42145.0, "invoice": 40725.0, "days": 18, "vin": "3TYKB5FN8TT035698", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT034759", "year": 2026, "make": "Toyota", "model": "7309", "modelFull": "TACOMA SR5 4X2 DBL CAB", "modelCode": "7309A", "type": "New", "color": "08X0", "srp": 42145.0, "invoice": 40725.0, "days": 40, "vin": "3TYKB5FN8TT034759", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT035122", "year": 2026, "make": "Toyota", "model": "7309", "modelFull": "TACOMA SR5 4X2 DBL CAB", "modelCode": "7309A", "type": "New", "color": "08X0", "srp": 42145.0, "invoice": 40725.0, "days": 39, "vin": "3TYKB5FNXTT035122", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "ST104401", "year": 2025, "make": "Toyota", "model": "7328", "modelFull": "TACOMA 4X4 DOUBLE CAB", "modelCode": "7328D", "type": "New", "color": "0089", "srp": 49260.0, "invoice": 47237.0, "days": 55, "vin": "3TYLB5JN6ST104401", "cmpgn": "No campaign", "trade": "Receipt", "isSafety": false, "isReceipt": true}, {"stock": "ST082604", "year": 2025, "make": "Toyota", "model": "7328", "modelFull": "TACOMA 4X4 DOUBLE CAB", "modelCode": "7328C", "type": "New", "color": "01J9", "srp": 48785.0, "invoice": 46782.0, "days": 209, "vin": "3TYLB5JN7ST082604", "cmpgn": "No campaign", "trade": "Receipt", "isSafety": false, "isReceipt": true}, {"stock": "ST020997", "year": 2025, "make": "Toyota", "model": "7333", "modelFull": "TACOMA HV 4WD DCAB TRD Sport", "modelCode": "7333B", "type": "New", "color": "01L7", "srp": 62020.0, "invoice": 58633.0, "days": 327, "vin": "3TYLC5LN3ST020997", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "TX369691", "year": 2026, "make": "Toyota", "model": "8481", "modelFull": "TUNDRA 4X4 4WD CREWMAX SR", "modelCode": "8481A", "type": "New", "color": "0040", "srp": 49760.0, "invoice": 47971.0, "days": 95, "vin": "5TFKB5DB0TX369691", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX376558", "year": 2026, "make": "Toyota", "model": "8481", "modelFull": "TUNDRA 4X4 4WD CREWMAX SR", "modelCode": "8481A", "type": "New", "color": "0040", "srp": 49760.0, "invoice": 47971.0, "days": 73, "vin": "5TFKB5DB0TX376558", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX349752", "year": 2026, "make": "Toyota", "model": "8481", "modelFull": "TUNDRA 4X4 4WD CREWMAX SR", "modelCode": "8481A", "type": "New", "color": "01G3", "srp": 49760.0, "invoice": 47971.0, "days": 52, "vin": "5TFKB5DB4TX349752", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX352426", "year": 2026, "make": "Toyota", "model": "8481", "modelFull": "TUNDRA 4X4 4WD CREWMAX SR", "modelCode": "8481A", "type": "New", "color": "01G3", "srp": 49760.0, "invoice": 47971.0, "days": 117, "vin": "5TFKB5DB6TX352426", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX354180", "year": 2026, "make": "Toyota", "model": "8481", "modelFull": "TUNDRA 4X4 4WD CREWMAX SR", "modelCode": "8481A", "type": "New", "color": "01G3", "srp": 49760.0, "invoice": 47971.0, "days": 48, "vin": "5TFKB5DBXTX354180", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX376587", "year": 2026, "make": "Toyota", "model": "8481", "modelFull": "TUNDRA 4X4 4WD CREWMAX SR", "modelCode": "8481A", "type": "New", "color": "01G3", "srp": 49760.0, "invoice": 47971.0, "days": 80, "vin": "5TFKB5DB7TX376587", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX381305", "year": 2026, "make": "Toyota", "model": "8481", "modelFull": "TUNDRA 4X4 4WD CREWMAX SR", "modelCode": "8481A", "type": "New", "color": "01G3", "srp": 49760.0, "invoice": 47971.0, "days": 54, "vin": "5TFKB5DB7TX381305", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX349638", "year": 2026, "make": "Toyota", "model": "8481", "modelFull": "TUNDRA 4X4 4WD CREWMAX SR", "modelCode": "8481A", "type": "New", "color": "01J9", "srp": 49760.0, "invoice": 47971.0, "days": 45, "vin": "5TFKB5DB6TX349638", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX395926", "year": 2026, "make": "Toyota", "model": "8481", "modelFull": "TUNDRA 4X4 4WD CREWMAX SR", "modelCode": "8481A", "type": "New", "color": "03U5", "srp": 49760.0, "invoice": 47971.0, "days": 6, "vin": "5TFKB5DBXTX395926", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX337287", "year": 2026, "make": "Toyota", "model": "8482", "modelFull": "TUNDRA 4X4 4WD TRD SPORT", "modelCode": "8482A", "type": "New", "color": "0040", "srp": 68385.0, "invoice": 64184.0, "days": 180, "vin": "5TFLA5DBXTX337287", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "RX207601", "year": 2024, "make": "Toyota", "model": "8482", "modelFull": "TUNDRA 4X4 4WD TRD SPORT", "modelCode": "8482D", "type": "New", "color": "08X8", "srp": 66870.0, "invoice": 51192.44, "days": 130, "vin": "5TFLA5DB8RX207601", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX120133", "year": 2026, "make": "Toyota", "model": "8484", "modelFull": "TUNDRA HYBRID 4X4 TRD PRO", "modelCode": "8484A", "type": "New", "color": "0040", "srp": 84025.0, "invoice": 78764.0, "days": 138, "vin": "5TFPC5DB0TX120133", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX121105", "year": 2026, "make": "Toyota", "model": "8484", "modelFull": "TUNDRA HYBRID 4X4 TRD PRO", "modelCode": "8484A", "type": "New", "color": "0040", "srp": 84025.0, "invoice": 78764.0, "days": 131, "vin": "5TFPC5DB0TX121105", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX122430", "year": 2026, "make": "Toyota", "model": "8484", "modelFull": "TUNDRA HYBRID 4X4 TRD PRO", "modelCode": "8484A", "type": "New", "color": "0040", "srp": 84025.0, "invoice": 78764.0, "days": 131, "vin": "5TFPC5DB5TX122430", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX116862", "year": 2026, "make": "Toyota", "model": "8484", "modelFull": "TUNDRA HYBRID 4X4 TRD PRO", "modelCode": "8484A", "type": "New", "color": "0040", "srp": 84025.0, "invoice": 78764.0, "days": 192, "vin": "5TFPC5DB4TX116862", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX116845", "year": 2026, "make": "Toyota", "model": "8484", "modelFull": "TUNDRA HYBRID 4X4 TRD PRO", "modelCode": "8484A", "type": "New", "color": "01G3", "srp": 84025.0, "invoice": 78764.0, "days": 17, "vin": "5TFPC5DB4TX116845", "cmpgn": "No campaign", "trade": "Receipt", "isSafety": false, "isReceipt": true}, {"stock": "SX094540", "year": 2025, "make": "Toyota", "model": "8484", "modelFull": "TUNDRA HYBRID 4X4 TRD PRO", "modelCode": "8484A", "type": "New", "color": "0040", "srp": 81450.0, "invoice": 76355.0, "days": 390, "vin": "5TFPC5DB4SX094540", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "SX097602", "year": 2025, "make": "Toyota", "model": "8484", "modelFull": "TUNDRA HYBRID 4X4 TRD PRO", "modelCode": "8484A", "type": "New", "color": "0040", "srp": 81450.0, "invoice": 76355.0, "days": 368, "vin": "5TFPC5DB4SX097602", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "SX101181", "year": 2025, "make": "Toyota", "model": "8484", "modelFull": "TUNDRA HYBRID 4X4 TRD PRO", "modelCode": "8484A", "type": "New", "color": "01G3", "srp": 81450.0, "invoice": 76355.0, "days": 341, "vin": "5TFPC5DB6SX101181", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T5030469", "year": 2026, "make": "Toyota", "model": "8781", "modelFull": "4RUNNER HV 4WD S-GR HYBRID", "modelCode": "8781A", "type": "New", "color": "01L7", "srp": 85290.0, "invoice": 80419.0, "days": 65, "vin": "JTEVB5BR8T5030469", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "S5024240", "year": 2025, "make": "Toyota", "model": "8784", "modelFull": "4RUNNER HV 4WD S-GR HYBRID", "modelCode": "8784E", "type": "New", "color": "08X0", "srp": 78935.0, "invoice": 74430.0, "days": 102, "vin": "JTEVB5BR3S5024240", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "S5018719", "year": 2025, "make": "Toyota", "model": "8784", "modelFull": "4RUNNER HV 4WD S-GR HYBRID", "modelCode": "8784D", "type": "New", "color": "01L0", "srp": 78935.0, "invoice": 74430.0, "days": 164, "vin": "JTEVB5BR2S5018719", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "S5006864", "year": 2025, "make": "Toyota", "model": "8789", "modelFull": "4RUNNER 2WD LTD", "modelCode": "8789C", "type": "New", "color": "01L7", "srp": 71755.0, "invoice": 67591.0, "days": 201, "vin": "JTEVA5AR0S5006864", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T5010672", "year": 2026, "make": "Toyota", "model": "8792", "modelFull": "4RUNNER 2WD STANDARD", "modelCode": "8792B", "type": "New", "color": "03U5", "srp": 50535.0, "invoice": 47585.0, "days": 9, "vin": "JTEVA5AR9T5010672", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T5010477", "year": 2026, "make": "Toyota", "model": "8792", "modelFull": "4RUNNER 2WD STANDARD", "modelCode": "8792A", "type": "New", "color": "01L0", "srp": 50160.0, "invoice": 47228.0, "days": 9, "vin": "JTEVA5AR0T5010477", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T5010490", "year": 2026, "make": "Toyota", "model": "8792", "modelFull": "4RUNNER 2WD STANDARD", "modelCode": "8792A", "type": "New", "color": "01L0", "srp": 50160.0, "invoice": 47228.0, "days": 12, "vin": "JTEVA5AR3T5010490", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T5010486", "year": 2026, "make": "Toyota", "model": "8792", "modelFull": "4RUNNER 2WD STANDARD", "modelCode": "8792A", "type": "New", "color": "08X0", "srp": 50160.0, "invoice": 47228.0, "days": 9, "vin": "JTEVA5AR1T5010486", "cmpgn": "No campaign", "trade": "Receipt", "isSafety": false, "isReceipt": true}, {"stock": "T5085775", "year": 2026, "make": "Toyota", "model": "8795", "modelFull": "4RUNNER 4WD TRAIL", "modelCode": "8795A", "type": "New", "color": "01L0", "srp": 64115.0, "invoice": 60066.0, "days": 67, "vin": "JTEVA5BR0T5085775", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T5098736", "year": 2026, "make": "Toyota", "model": "8795", "modelFull": "4RUNNER 4WD TRAIL", "modelCode": "8795A", "type": "New", "color": "08X0", "srp": 64115.0, "invoice": 60066.0, "days": 25, "vin": "JTEVA5BR0T5098736", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}];
+var LAST_UPDATED="March 26, 2026";
+
+var SORT={ov:{col:'days',dir:'desc'},n:{col:'days',dir:'desc'},u:{col:'days',dir:'desc'},ag:{col:'days',dir:'desc'}};
+var F={ovAge:'0-9999',nAge:'all',agMin:'90',smSort:'days',smExclude:'safety'};
+var CI={};
+
+/* ══════════════════ DATE ══════════════════ */
+(function(){
+  var el=document.getElementById('navDate');
+  try{
+    var d=new Date();
+    var opts={weekday:'short',month:'short',day:'numeric',year:'numeric'};
+    el.textContent=d.toLocaleDateString('en-US',opts);
+  }catch(e){
+    el.textContent=new Date().toString().slice(0,15);
+  }
+})();
+
+// Auto-load preloaded data on startup
+(function(){
+  D=PRELOADED_DATA.slice();
+  refreshAll();
+  document.getElementById('lastImportBadge').textContent='Data: '+LAST_UPDATED;
+  document.getElementById('lastImportBadge').style.display='inline-block';
+  document.getElementById('syncBadge').style.display='flex';
+  document.getElementById('footerText').textContent=D.length+' units loaded · Data as of '+LAST_UPDATED;
+})();
+
+/* ══════════════════ MODAL ══════════════════ */
+function openModal(){document.getElementById('modal').classList.add('open');}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+/* ══════════════════ FILE HANDLING ══════════════════ */
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('drag-over');
+  var file=e.dataTransfer.files[0];
+  if(file) readFile(file);
+}
+function handleFileSelect(file){
+  if(file) readFile(file);
+}
+function readFile(file){
+  var name=file.name;
+  var ext=name.split('.').pop().toLowerCase();
+  document.getElementById('fileLabel').textContent='&#10003; '+name;
+  document.getElementById('fileLabel').style.display='block';
+  if(ext==='xlsx'||ext==='xls'){
+    var reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        var bytes=new Uint8Array(e.target.result);
+        var csv=xlsxToCSV(bytes);
+        document.getElementById('csvInput').value=csv;
+        validateCSV();
+      }catch(err){
+        document.getElementById('fileLabel').textContent='Error: '+err.message;
+        document.getElementById('fileLabel').style.color='#f87171';
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    var reader=new FileReader();
+    reader.onload=function(e){
+      document.getElementById('csvInput').value=e.target.result;
+      validateCSV();
+    };
+    reader.readAsText(file);
+  }
+}
+
+/* ══════════════════ MINIMAL XLSX READER ══════════════════ */
+/* Reads shared strings + sheet data from xlsx without any library */
+function xlsxToCSV(uint8){
+  // xlsx is a zip file — find files by signature
+  var str=String.fromCharCode.apply(null,uint8);
+  // Fall back: tell user to save as CSV
+  throw new Error('Please save your Excel file as CSV first (File > Save As > CSV), then upload the CSV.');
+}
+
+/* ══════════════════ SAMPLE DATA ══════════════════ */
+var SAMPLE="Model Name,Serial No.,Model,Ext.,Yr.,VIN,DIS,Invoice,Total SRP,Cmpgn.,Trade Status\nPRIUS SEDAN,T3065592,1170A,01L0,2026,JTDACAAU3T3065592,171,33140.00,35190.00,Safety Campaign,\nPRIUS PRIME SEDAN,T3065994,1175B,0089,2026,JTDACACU5T3065994,105,34093.58,36430.00,Safety Campaign,\nCOROLLA SE CVT L4,T3527044,1684B,01K3,2026,JTDP4MCE6T3527044,45,30004.00,31670.00,No campaign,\nCOROLLA LE CVT L4,T3039648,1695C,0089,2026,JTDB4MEE9T3039648,28,26114.00,27730.00,No campaign,Receipt\nTACOMA SR 4X2,TT041655,7302A,01L7,2026,3TYKD5HNXTT041655,112,36315.00,37450.00,No campaign,\nTACOMA SR 4X4,TT023590,7303A,0040,2026,3TYLD5KNXTT023590,36,39884.00,41010.00,No campaign,\nCAMRY XSE HYBRID,TU224125,2613A,01L7,2026,4T1DAACK6TU224125,135,48348.00,51010.00,Safety Campaign,\nTUNDRA 4X4 SR,TX349752,8481A,01G3,2026,5TFKB5DB4TX349752,108,47971.00,49760.00,No campaign,\nTUNDRA HV TRD PRO,TX120133,8484A,0040,2026,5TFPC5DB0TX120133,183,78764.00,84025.00,Safety Campaign,\n4RUNNER HV 4WD,T5030469,8781A,01L7,2026,JTEVB5BR8T5030469,92,80419.00,85290.00,No campaign,Receipt\nCOROLLA HYBRID LE,T3130264,1692B,01F7,2026,JTDBCMFE6T3130264,73,29183.00,30555.00,No campaign,\nGR86 COUPE,T9077430,6354B,0DCK,2026,JF1ZNBE17T9077430,16,38306.00,39630.00,No campaign,\nSIENNA CE FWD,,5190B,0040,2026,5TDKRKEC5TS308179,3,49014.00,51730.00,No campaign,\nCROWN SIGNIA LTD,T3036462,4061A,0090,2026,JTDACAAJ2T3036462,71,59635.00,63630.00,No campaign,\nTACOMA HV TRD,ST020997,7333B,01L7,2025,3TYLC5LN3ST020997,318,58633.00,62020.00,Safety Campaign,";
+function loadSample(){document.getElementById('csvInput').value=SAMPLE;validateCSV();}
+
+/* ══════════════════ CSV PARSE ══════════════════ */
+function parseCSV(raw){
+  var lines=raw.trim().split('\n').filter(function(l){return l.trim();});
+  if(lines.length<2) return null;
+  var sep=lines[0].indexOf('\t')>=0?'\t':',';
+  var rawH=lines[0].split(sep).map(function(h){return h.trim().replace(/^"|"$/g,'');});
+  var normH=rawH.map(function(h){return h.toLowerCase().replace(/[^a-z0-9]/g,'');});
+  var aliases={
+    stock:    ['serialno','stockno','stock','serialnumber'],
+    year:     ['yr','year'],
+    modelname:['modelname'],
+    model:    ['model'],
+    type:     ['type'],
+    days:     ['dis','daysonlot','days'],
+    color:    ['ext','color','exterior'],
+    srp:      ['totalsrp','srp','price','totalprice'],
+    invoice:  ['invoice'],
+    vin:      ['vin'],
+    cmpgn:    ['cmpgn','campaign','cmpgn'],
+    trade:    ['tradestatus','trade','tradestatuscolumn']
+  };
+  function idx(keys){for(var i=0;i<keys.length;i++){var x=normH.indexOf(keys[i]);if(x>=0)return x;}return -1;}
+  var im={};
+  Object.keys(aliases).forEach(function(k){im[k]=idx(aliases[k]);});
+  var req=['stock','year','model','days','color','srp','vin'];
+  var miss=req.filter(function(k){return im[k]<0;});
+  if(miss.length) return{error:'Missing columns: '+miss.join(', ')};
+  function splitCSVLine(line,sep){
+    if(sep==='\t') return line.split('\t').map(function(v){return v.trim();});
+    var res=[],cur='',inQ=false;
+    for(var ci=0;ci<line.length;ci++){
+      var ch=line[ci];
+      if(ch==='"'){inQ=!inQ;}
+      else if(ch===sep&&!inQ){res.push(cur);cur='';}
+      else{cur+=ch;}
+    }
+    res.push(cur);
+    return res;
+  }
+    function g(vals,k){var i=im[k];return i>=0&&vals[i]!==undefined?vals[i].replace(/^"|"$/g,'').trim():'';}
+  var rows=[],errs=[];
+  for(var i=1;i<lines.length;i++){
+    var vals=splitCSVLine(lines[i],sep);
+    var days=parseInt(g(vals,'days'));
+    var year=parseInt(g(vals,'year'));
+    var srp=parseFloat(g(vals,'srp').replace(/[^0-9.]/g,''));
+    var inv=parseFloat(g(vals,'invoice').replace(/[^0-9.]/g,''))||0;
+    if(isNaN(days)||isNaN(year)){errs.push('Row '+(i+1)+' skipped');continue;}
+    var modelCode=g(vals,'model');
+    var model4=modelCode.substring(0,4);
+    var modelFull=g(vals,'modelname')||modelCode;
+    var stockVal=g(vals,'stock')||g(vals,'vin').slice(-6)||('R'+i);
+    var typeVal=g(vals,'type')||'New';
+    var cmpgn=g(vals,'cmpgn');
+    var trade=g(vals,'trade');
+    rows.push({
+      stock:stockVal,year:year,make:'Toyota',
+      model:model4,modelFull:modelFull,modelCode:modelCode,
+      type:typeVal,color:g(vals,'color')||'—',
+      srp:isNaN(srp)?0:srp,invoice:inv,
+      days:days,vin:g(vals,'vin'),
+      cmpgn:cmpgn,trade:trade,
+      isSafety:cmpgn.toLowerCase().indexOf('safety')>=0,
+      isReceipt:trade.toLowerCase().indexOf('receipt')>=0
+    });
+  }
+  return{rows:rows,errs:errs};
+}
+
+function validateCSV(){
+  var raw=document.getElementById('csvInput').value;
+  var res=document.getElementById('parseResult');
+  var pw=document.getElementById('previewWrap');
+  var btn=document.getElementById('importBtn');
+  res.style.display='none';pw.style.display='none';btn.disabled=true;PB=[];
+  if(!raw.trim()) return;
+  var result=parseCSV(raw);
+  if(!result) return;
+  if(result.error){res.className='parse-result pr-err';res.textContent='Error: '+result.error;res.style.display='block';return;}
+  PB=result.rows;
+  var w=result.errs.length?' · '+result.errs.length+' rows skipped':'';
+  res.className=result.errs.length?'parse-result pr-warn':'parse-result pr-ok';
+  res.textContent=(result.errs.length?'':'\u2713 ')+PB.length+' vehicles parsed'+w;
+  res.style.display='block';
+  // Preview table
+  var tbl=document.getElementById('previewTbl');tbl.innerHTML='';
+  var thead=tbl.createTHead();var hr=thead.insertRow();
+  ['Serial No.','Yr.','Model','Model Name','Ext.','SRP','Days','Campaign','Trade'].forEach(function(h){var th=document.createElement('th');th.textContent=h;hr.appendChild(th);});
+  var tbody=tbl.createTBody();
+  PB.slice(0,6).forEach(function(v){
+    var tr=tbody.insertRow();
+    [v.stock,v.year,v.model,v.modelFull,v.color,v.srp?'$'+v.srp.toLocaleString():'—',v.days+'d',v.cmpgn,v.trade].forEach(function(val){var td=tr.insertCell();td.textContent=val||'—';});
+  });
+  if(PB.length>6){var tr=tbody.insertRow();var td=tr.insertCell();td.colSpan=9;td.textContent='... and '+(PB.length-6)+' more';td.style.cssText='color:var(--muted);text-align:center;padding:7px;font-style:italic';}
+  pw.style.display='block';
+  btn.disabled=(PB.length===0);
+}
+
+function commitImport(){
+  D=PB.slice();
+  refreshAll();
+  closeModal();
+  var now=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('lastImportBadge').textContent='Imported: '+now;
+  document.getElementById('lastImportBadge').style.display='inline-block';
+  document.getElementById('syncBadge').style.display='flex';
+  document.getElementById('footerText').textContent=D.length+' units loaded \xb7 Updated '+now;
+}
+
+/* ══════════════════ TABS ══════════════════ */
+function switchTab(name,el){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.tab-view').forEach(function(v){v.classList.remove('active');});
+  el.classList.add('active');
+  document.getElementById('view-'+name).classList.add('active');
+  if(D.length) renderTab(name);
+}
+function renderTab(name){
+  if(name==='overview'){updateOvCharts();renderOvTable();}
+  else if(name==='new'){updateNCharts();renderNTable();}
+  else if(name==='aging'){updateAgCharts();renderAgTable();}
+  else if(name==='sellmodel'){renderSellModel();}
+}
+
+/* ══════════════════ FILTERS ══════════════════ */
+function setF(key,val,btn){
+  F[key]=val;
+  btn.closest('.filters').querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  if(key==='ovAge') renderOvTable();
+  else if(key==='nAge') renderNTable();
+  else if(key==='agMin') renderAgTable();
+  else if(key==='smExclude'||key==='smSort'||key==='smMin'){renderSellModel();}
+}
+
+/* ══════════════════ HELPERS ══════════════════ */
+function isNew(v){return v.type.toLowerCase()==='new';}
+function avgD(arr){return arr.length?Math.round(arr.reduce(function(s,v){return s+v.days;},0)/arr.length):0;}
+function ageCls(d){return d>=90?'age-crit':d>=60?'age-warn':'age-ok';}
+function ageIcon(d){return d>=90?'\uD83D\uDD34':d>=60?'\uD83D\uDFE1':'\uD83D\uDFE2';}
+function ageColor(d){return d>=90?'#ef4444':d>=60?'#f59e0b':'#22c55e';}
+function rowCls(v){return '';}
+function statusBadge(v){
+  if(v.isSafety) return '<span class="status-badge sb-safety">Safety</span>';
+  if(v.isReceipt) return '<span class="status-badge sb-receipt">Receipt</span>';
+  return '';
+}
+function actBtn(d){
+  if(d>=90) return '<button class="act-red">⚡ Priority Unit</button>';
+  if(d>=60) return '<button class="act-amber">Review</button>';
+  return '<button class="act-blue">Monitor</button>';
+}
+function barHTML(d,mx){
+  var pct=Math.min(Math.round(d/(mx||120)*100),100);
+  return '<div style="width:70px;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden"><div style="width:'+pct+'%;height:100%;background:'+ageColor(d)+';border-radius:3px"></div></div>';
+}
+function fmtPrice(p){return p?'$'+p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';}
+var COLORS=['#3b82f6','#a78bfa','#2dd4bf','#f59e0b','#22c55e','#ef4444','#fb923c','#e879f9','#38bdf8','#f472b6'];
+
+/* ══════════════════ CANVAS CHARTS ══════════════════ */
+function destroyChart(id){if(CI[id]){CI[id]=null;}}
+function getCtx(id){
+  var canvas=document.getElementById(id);
+  var wrap=canvas.parentElement;
+  canvas.width=wrap.offsetWidth||600;
+  canvas.height=wrap.offsetHeight||220;
+  return canvas.getContext('2d');
+}
+
+function drawBarChart(id,labels,datasets,opts){
+  opts=opts||{};
+  var canvas=document.getElementById(id);
+  var wrap=canvas.parentElement;
+  canvas.width=wrap.offsetWidth||600;
+  canvas.height=wrap.offsetHeight||220;
+  var ctx=canvas.getContext('2d');
+  var W=canvas.width,H=canvas.height;
+  var pad={top:16,right:16,bottom:40,left:opts.horizontal?70:36};
+  var cw=W-pad.left-pad.right, ch=H-pad.top-pad.bottom;
+  ctx.clearRect(0,0,W,H);
+  var allVals=[];
+  datasets.forEach(function(ds){ds.data.forEach(function(v){allVals.push(v);});});
+  var maxV=Math.max.apply(null,allVals.concat([1]));
+  var n=labels.length;
+  var ds0=datasets[0],ds1=datasets[1];
+  var barW=opts.horizontal?(ch/n*0.6):(cw/n/(datasets.length)*0.8);
+  var groupW=opts.horizontal?(ch/n):(cw/n);
+  // Grid lines
+  ctx.strokeStyle='rgba(255,255,255,.05)';
+  ctx.lineWidth=1;
+  for(var gi=0;gi<=4;gi++){
+    var gv=maxV*gi/4;
+    if(opts.horizontal){
+      var gx=pad.left+cw*gi/4;
+      ctx.beginPath();ctx.moveTo(gx,pad.top);ctx.lineTo(gx,pad.top+ch);ctx.stroke();
+      ctx.fillStyle='#7b82a0';ctx.font='10px system-ui';ctx.textAlign='center';
+      ctx.fillText(Math.round(gv),gx,pad.top+ch+14);
+    } else {
+      var gy=pad.top+ch-ch*gi/4;
+      ctx.beginPath();ctx.moveTo(pad.left,gy);ctx.lineTo(pad.left+cw,gy);ctx.stroke();
+      ctx.fillStyle='#7b82a0';ctx.font='10px system-ui';ctx.textAlign='right';
+      ctx.fillText(Math.round(gv),pad.left-5,gy+3);
+    }
+  }
+  // Bars
+  datasets.forEach(function(ds,di){
+    ds.data.forEach(function(val,i){
+      ctx.fillStyle=Array.isArray(ds.color)?ds.color[i]:ds.color;
+      ctx.globalAlpha=0.9;
+      if(opts.horizontal){
+        var y=pad.top+i*groupW+(di*(barW+2));
+        var bw=cw*val/maxV;
+        roundRect(ctx,pad.left,y,bw,barW,3);
+        ctx.fill();
+      } else {
+        var x=pad.left+i*groupW+(di*(barW+1));
+        var bh=ch*val/maxV;
+        roundRect(ctx,x,pad.top+ch-bh,barW,bh,3);
+        ctx.fill();
+      }
+      ctx.globalAlpha=1;
+    });
+  });
+  // Labels
+  ctx.fillStyle='#7b82a0';ctx.font='10px system-ui';
+  labels.forEach(function(lbl,i){
+    if(opts.horizontal){
+      ctx.textAlign='right';
+      ctx.fillText(lbl.length>8?lbl.slice(0,8):lbl,pad.left-5,pad.top+i*groupW+barW/2*(datasets.length)+4);
+    } else {
+      ctx.textAlign='center';
+      ctx.fillText(lbl,pad.left+i*groupW+groupW/2,pad.top+ch+14);
+    }
+  });
+}
+
+function drawDonutChart(id,labels,values,colors){
+  var canvas=document.getElementById(id);
+  var wrap=canvas.parentElement;
+  canvas.width=wrap.offsetWidth||300;
+  canvas.height=wrap.offsetHeight||220;
+  var ctx=canvas.getContext('2d');
+  var W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  var cx=W/2,cy=H/2,R=Math.min(W,H)*0.38,r=R*0.55;
+  var total=values.reduce(function(s,v){return s+v;},0)||1;
+  var start=-Math.PI/2;
+  values.forEach(function(v,i){
+    var angle=2*Math.PI*v/total;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,R,start,start+angle);
+    ctx.closePath();
+    ctx.fillStyle=colors[i%colors.length];
+    ctx.globalAlpha=0.9;
+    ctx.fill();
+    ctx.globalAlpha=1;
+    start+=angle;
+  });
+  // Donut hole
+  ctx.beginPath();ctx.arc(cx,cy,r,0,2*Math.PI);
+  ctx.fillStyle='#181c27';ctx.fill();
+  // Center text
+  ctx.fillStyle='#e8eaf0';ctx.font='500 14px system-ui';ctx.textAlign='center';
+  ctx.fillText(values.length+' models',cx,cy+5);
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  if(w<0){x+=w;w=-w;}if(h<0){y+=h;h=-h;}
+  r=Math.min(r,w/2,h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+
+/* ══════════════════ REFRESH ALL ══════════════════ */
+function refreshAll(){
+  updateKPIs();
+  updateOvCharts();renderOvTable();
+  // Other tabs rendered on demand when switched to
+}
+
+/* ══════════════════ KPIs + ALERTS ══════════════════ */
+function updateKPIs(){
+  var eligible=D.filter(function(v){return !v.isSafety;});
+  var t=D.length,avg=avgD(eligible),a90=eligible.filter(function(v){return v.days>=90;}).length;
+  var val=D.reduce(function(s,v){return s+v.srp;},0);
+  var nw=D.filter(isNew).length;
+  document.getElementById('kpiTotal').textContent=t;
+  document.getElementById('kpiTotalSub').textContent=nw+' new vehicles';
+  var safetyCnt=D.filter(function(v){return v.isSafety;}).length;
+  document.getElementById('kpiAvg').textContent=safetyCnt;
+  document.getElementById('kpiAvgSub').textContent=safetyCnt?safetyCnt+' unit'+(safetyCnt>1?'s':'')+' cannot be sold':'\u2713 No safety units';
+  document.getElementById('kpi90').textContent=a90;
+  document.getElementById('kpi90Sub').textContent=a90?((a90/t*100).toFixed(0))+'% of inventory critical':'\u2713 None critical';
+  // Car of the Day — oldest available for sale unit (no safety campaign)
+  var sellable=D.filter(function(v){return !v.isSafety&&v.days>0;});
+  if(sellable.length){
+    sellable.sort(function(a,b){return b.days-a.days;});
+    var pick=sellable[0];
+    document.getElementById('cotdModel').textContent=pick.year+' '+pick.model;
+    document.getElementById('cotdSub').textContent=pick.modelFull;
+    document.getElementById('cotdDays').textContent=pick.days+'d on lot';
+    document.getElementById('cotdDays').style.display='inline';
+    document.getElementById('cotdStock').textContent=pick.stock;
+    document.getElementById('cotdStock').style.display='inline';
+    document.getElementById('cotdColor').textContent=pick.color;
+    document.getElementById('cotdColor').style.display='inline';
+  } else {
+    document.getElementById('cotdModel').textContent='No eligible units';
+    document.getElementById('cotdSub').textContent='All units have safety or receipt flags';
+  }
+}
+
+function updateAlerts(){
+  var s=document.getElementById('alertStrip');s.innerHTML='';
+  var safety=D.filter(function(v){return v.isSafety;});
+  var a90=D.filter(function(v){return v.days>=90&&!v.isSafety;});
+  var a60=D.filter(function(v){return v.days>=60&&v.days<90;});
+  var receipt=D.filter(function(v){return v.isReceipt;});
+  if(safety.length) s.innerHTML+='<div class="alert">\uD83D\uDED1 '+safety.length+' unit'+(safety.length>1?'s have':'has')+' a Safety Campaign \u2014 cannot be sold</div>';
+  if(a90.length) s.innerHTML+='<div class="alert">\u26A0 '+a90.length+' unit'+(a90.length>1?'s':'')+'aged 90+ days \u2014 price down recommended</div>';
+  if(a60.length) s.innerHTML+='<div class="alert alert-amber">\u25c8 '+a60.length+' unit'+(a60.length>1?'s':'')+' in 60\u201390 day range \u2014 review pricing</div>';
+  if(receipt.length) s.innerHTML+='<div class="alert alert-amber">\u25c8 '+receipt.length+' trade receipt unit'+(receipt.length>1?'s':'')+' on lot</div>';
+  if(!safety.length&&!a90.length&&!a60.length&&D.length) s.innerHTML='<div class="alert alert-green">\u2713 No critical issues \u2014 inventory health looks good</div>';
+}
+
+/* ══════════════════ OVERVIEW CHARTS ══════════════════ */
+function updateOvCharts(){
+  var bkts=[[0,15],[16,30],[31,45],[46,60],[61,90],[91,9999]];
+  var bl=['0-15','16-30','31-45','46-60','61-90','90+'];
+  var nD=bkts.map(function(b){return D.filter(function(v){return !v.isSafety&&v.days>=b[0]&&v.days<=b[1];}).length;});
+  drawBarChart('agingChart',bl,[{data:nD,color:'#3b82f6'}]);
+  // Aging bars
+  var bktColors=['#22c55e','#4ade80','#2dd4bf','#f59e0b','#fb923c','#ef4444'];
+  var bktLabels=['0\u201315 days','16\u201330','31\u201345','46\u201360','61\u201390','90+'];
+  var total=D.length||1;
+  var counts=bkts.map(function(b){return D.filter(function(v){return !v.isSafety&&v.days>=b[0]&&v.days<=b[1];}).length;});
+  var maxC=Math.max.apply(null,counts.concat([1]));
+  document.getElementById('agingBars').innerHTML=bkts.map(function(b,i){
+    return '<div class="arow"><span class="alabel">'+bktLabels[i]+'</span><div class="atrack"><div class="afill" style="width:'+Math.round(counts[i]/maxC*100)+'%;background:'+bktColors[i]+'"></div></div><span class="acount" style="color:'+bktColors[i]+'">'+counts[i]+'</span><span class="apct">'+Math.round(counts[i]/total*100)+'%</span></div>';
+  }).join('');
+}
+
+/* ══════════════════ TABLE BUILDERS ══════════════════ */
+function showTable(emptyId,tblId,hasData,filteredLen,totalLen,titleId,countId,titleText){
+  if(!hasData){
+    document.getElementById(emptyId).style.display='block';
+    document.getElementById(tblId).style.display='none';
+  } else {
+    document.getElementById(emptyId).style.display='none';
+    document.getElementById(tblId).style.display='table';
+  }
+  document.getElementById(titleId).textContent=titleText+' \u2014 '+filteredLen+' unit'+(filteredLen!==1?'s':'');
+  document.getElementById(countId).textContent=totalLen>filteredLen?'Showing '+filteredLen+' of '+totalLen:'';
+}
+
+function makeRow(v,maxD,showType){
+  var tr=document.createElement('tr');
+  tr.className=rowCls(v);
+  var cells='<td><span class="stock-tag">'+v.stock+'</span></td>';
+  cells+='<td><strong style="font-weight:500">'+v.year+' '+v.model+'</strong>'+statusBadge(v)+'<br><span style="font-size:11px;color:var(--muted)">'+v.modelFull+'</span></td>';
+
+  cells+='<td style="color:var(--muted)">'+v.color+'</td>';
+  cells+='<td style="font-family:var(--mono);font-size:12px">'+fmtPrice(v.invoice)+'</td>';
+  cells+='<td style="font-family:var(--mono);font-size:12px">'+fmtPrice(v.srp)+'</td>';
+  cells+='<td><span class="age-pill '+ageCls(v.days)+'">'+ageIcon(v.days)+' '+v.days+'d</span></td>';
+  cells+='<td>'+barHTML(v.days,maxD)+'</td>';
+  cells+='<td>'+actBtn(v.days)+'</td>';
+  tr.innerHTML=cells;
+  return tr;
+}
+
+function renderOvTable(){
+  var ar=(F.ovAge||'0-9999').split('-').map(Number);
+  var q=(document.getElementById('ovSearch').value||'').toLowerCase();
+  var data=D.filter(function(v){
+    var t=isNew(v)||true;
+    var a=v.days>=ar[0]&&v.days<=ar[1];
+    var s=!q||[v.stock,v.model,v.modelFull,v.vin,v.color].join(' ').toLowerCase().indexOf(q)>=0;
+    return t&&a&&s;
+  });
+  data=applySortToData(data,'ov');
+  var maxD=Math.max.apply(null,data.map(function(v){return v.days;}).concat([60]));
+  showTable('ovEmpty','ovTbl',D.length>0,data.length,D.length,'ovTitle','ovCount','All Inventory');
+  var tbody=document.getElementById('ovBody');tbody.innerHTML='';
+  data.forEach(function(v){tbody.appendChild(makeRow(v,maxD,false));});
+}
+
+function updateNCharts(){
+  var nv=D.filter(isNew);
+  var byM={};nv.forEach(function(v){byM[v.model]=(byM[v.model]||0)+1;});
+  var mKeys=Object.keys(byM).sort(function(a,b){return byM[b]-byM[a];}).slice(0,8);
+  drawDonutChart('nMixChart',mKeys,mKeys.map(function(k){return byM[k];}),COLORS);
+  document.getElementById('nMixLeg').innerHTML=mKeys.map(function(k,i){return '<span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><span style="width:10px;height:10px;border-radius:2px;background:'+COLORS[i%COLORS.length]+';display:inline-block"></span>'+k+'</span>';}).join('');
+  var byMD={};nv.forEach(function(v){if(!byMD[v.model])byMD[v.model]={t:0,c:0};byMD[v.model].t+=v.days;byMD[v.model].c++;});
+  var mE=Object.entries(byMD).map(function(e){return{m:e[0],avg:Math.round(e[1].t/e[1].c)};}).sort(function(a,b){return b.avg-a.avg;}).slice(0,8);
+  drawBarChart('nDaysChart',mE.map(function(e){return e.m;}),[{data:mE.map(function(e){return e.avg;}),color:mE.map(function(e){return ageColor(e.avg);})}],{horizontal:true});
+  // KPIs
+  var nvElig=nv.filter(function(v){return !v.isSafety;});
+  var avg=avgD(nvElig),val=nv.reduce(function(s,v){return s+v.srp;},0),a60=nvElig.filter(function(v){return v.days>=60;}).length;
+  document.getElementById('nKpiTotal').textContent=nv.length||'—';
+  document.getElementById('nKpiSub').textContent=nv.length?Object.keys(byM).length+' model codes':'No new vehicles';
+  document.getElementById('nKpiAvg').textContent=nv.length?avg:'—';
+  document.getElementById('nKpiAvgSub').textContent=avg>60?'\u25b2 '+(avg-60)+'d over target':'\u2713 Within 60-day target';
+  document.getElementById('nKpi60').textContent=a60;
+  document.getElementById('nKpi60Sub').textContent=a60?'Review for markdown':'\u2713 None at risk';
+}
+
+function renderNTable(){
+  var ar=F.nAge==='all'?[0,9999]:F.nAge.split('-').map(Number);
+  var q=(document.getElementById('nSearch').value||'').toLowerCase();
+  var data=D.filter(function(v){return isNew(v)&&v.days>=ar[0]&&v.days<=ar[1]&&(!q||[v.stock,v.model,v.modelFull,v.vin].join(' ').toLowerCase().indexOf(q)>=0);}).sort(function(a,b){return b.days-a.days;});
+  var maxD=Math.max.apply(null,data.map(function(v){return v.days;}).concat([60]));
+  showTable('nEmpty','nTbl',D.filter(isNew).length>0,data.length,D.filter(isNew).length,'nTitle','nCount','New Vehicles');
+  var tbody=document.getElementById('nBody');tbody.innerHTML='';
+  data.forEach(function(v){tbody.appendChild(makeRow(v,maxD,false));});
+}
+
+function updateAgCharts(){
+  var bkts=[[0,15],[16,30],[31,45],[46,60],[61,90],[91,9999]];
+  var bl=['0-15','16-30','31-45','46-60','61-90','90+'];
+  var counts=bkts.map(function(b){return D.filter(function(v){return !v.isSafety&&v.days>=b[0]&&v.days<=b[1];}).length;});
+  drawBarChart('agHeatChart',bl,[{data:counts,color:['#22c55e','#4ade80','#2dd4bf','#f59e0b','#fb923c','#ef4444']}]);
+  var a90=D.filter(function(v){return !v.isSafety&&v.days>=90;});
+  var a60=D.filter(function(v){return !v.isSafety&&v.days>=60&&v.days<90;});
+  var agingD=D.filter(function(v){return !v.isSafety;});
+  var oldest=agingD.length?Math.max.apply(null,agingD.map(function(v){return v.days;})):0;
+  var oldestV=agingD.find(function(v){return v.days===oldest;});
+  document.getElementById('agKpi90').textContent=a90.length||'0';
+  document.getElementById('agKpi90Sub').textContent=a90.length?a90.length+' unit'+(a90.length>1?'s need':' needs')+' action':'\u2713 None critical';
+  document.getElementById('agKpi60').textContent=a60.length||'0';
+  document.getElementById('agKpiOldest').textContent=oldest?oldest+'d':'—';
+  document.getElementById('agKpiOldestSub').textContent=oldestV?oldestV.year+' '+oldestV.model+' \xb7 '+oldestV.modelFull:'No data';
+}
+
+function renderAgTable(){
+  var minD=parseInt(F.agMin)||90;
+  var q=(document.getElementById('agSearch').value||'').toLowerCase();
+  var data=D.filter(function(v){
+    var t=true;
+    var a=v.days>=minD&&!v.isSafety;
+    var s=!q||[v.stock,v.model,v.modelFull].join(' ').toLowerCase().indexOf(q)>=0;
+    return t&&a&&s;
+  });
+  data=applySortToData(data,'ag');
+  var hasData=D.length>0;
+  if(!hasData){document.getElementById('agEmpty').style.display='block';document.getElementById('agTbl').style.display='none';}
+  else if(!data.length){
+    document.getElementById('agEmpty').style.display='block';
+    document.getElementById('agEmpty').querySelector('.empty-title').textContent='No units aged '+minD+'+ days';
+    document.getElementById('agEmpty').querySelector('.empty-sub').textContent='Try lowering the threshold';
+    document.getElementById('agEmpty').querySelector('.btn-import').style.display='none';
+    document.getElementById('agTbl').style.display='none';
+  } else {
+    document.getElementById('agEmpty').style.display='none';
+    document.getElementById('agTbl').style.display='table';
+  }
+  document.getElementById('agTitle').textContent=minD+'+ Day Units \u2014 '+data.length+' found';
+  document.getElementById('agCount').textContent='Sorted by most aged';
+  var tbody=document.getElementById('agBody');tbody.innerHTML='';
+  data.forEach(function(v,i){
+    var tr=document.createElement('tr');
+    tr.className=rowCls(v);
+    var rankStyle=i===0?'color:#f87171;font-weight:600':i===1?'color:#fbbf24;font-weight:600':i===2?'color:#93c5fd;font-weight:600':'color:var(--muted)';
+    tr.innerHTML='<td style="'+rankStyle+'">'+(i+1)+'</td>'
+      +'<td><span class="stock-tag">'+v.stock+'</span></td>'
+      +'<td><strong style="font-weight:500">'+v.year+' '+v.model+'</strong>'+statusBadge(v)+'<br><span style="font-size:11px;color:var(--muted)">'+v.modelFull+'</span></td>'
+      +'<td style="font-family:var(--mono);font-size:12px">'+fmtPrice(v.invoice)+'</td>'
+      +'<td style="font-family:var(--mono);font-size:12px">'+fmtPrice(v.srp)+'</td>'
+      +'<td><span class="age-pill '+ageCls(v.days)+'">'+ageIcon(v.days)+' '+v.days+'d</span></td>'
+      +'<td>'+actBtn(v.days)+'</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+/* ══════════════════ SELL MODEL ══════════════════ */
+function renderSellModel(){
+  var minDays = parseInt(F.smMin)||0;
+  var q = (document.getElementById('smSearch').value||'').toLowerCase();
+  var excludeSafety = F.smExclude === 'safety';
+
+  // Build model+color groups
+  var groups = {};
+  D.forEach(function(v){
+    if(excludeSafety && v.isSafety) return;
+    var key = v.model + '||' + v.color;
+    if(!groups[key]) groups[key] = {
+      model: v.model,
+      modelFull: v.modelFull,
+      color: v.color,
+      units: [],
+      maxDays: 0,
+      avgDays: 0,
+      hasSafety: false,
+      hasReceipt: false
+    };
+    groups[key].units.push(v);
+    if(v.days > groups[key].maxDays) groups[key].maxDays = v.days;
+    if(v.isSafety) groups[key].hasSafety = true;
+    if(v.isReceipt) groups[key].hasReceipt = true;
+  });
+
+  // Compute avgDays per group
+  Object.values(groups).forEach(function(g){
+    g.avgDays = Math.round(g.units.reduce(function(s,v){return s+v.days;},0)/g.units.length);
+  });
+
+  // Filter
+  var list = Object.values(groups).filter(function(g){
+    var ageOk = g.maxDays >= minDays;
+    var searchOk = !q || (g.model+' '+g.modelFull+' '+g.color).toLowerCase().indexOf(q)>=0;
+    return ageOk && searchOk;
+  });
+
+  // Sort
+  list.sort(function(a,b){
+    if(F.smSort==='count') return b.units.length - a.units.length;
+    return b.maxDays - a.maxDays;
+  });
+
+  // KPIs
+  var oldest = list.length ? list[0] : null;
+  var c60 = list.filter(function(g){return g.maxDays>=60;}).length;
+  var c90 = list.filter(function(g){return g.maxDays>=90;}).length;
+  document.getElementById('smKpiCombos').textContent = list.length || '—';
+  document.getElementById('smKpiCombosSub').textContent = list.length ? 'model · color combinations' : 'No data';
+  document.getElementById('smKpiOldest').textContent = oldest ? oldest.maxDays+'d' : '—';
+  document.getElementById('smKpiOldestSub').textContent = oldest ? oldest.model+' · '+oldest.color : 'No data';
+  document.getElementById('smKpi60').textContent = c60;
+  document.getElementById('smKpi90').textContent = c90;
+
+  // Alerts
+  var alerts = document.getElementById('smAlerts');
+  alerts.innerHTML = '';
+  if(c90>0) alerts.innerHTML += '<div class="alert">⚠ '+c90+' model/color combo'+(c90>1?'s have':' has')+' units 90+ days — price down recommended</div>';
+  if(c60>0&&c90===0) alerts.innerHTML += '<div class="alert alert-amber">◈ '+c60+' combo'+(c60>1?'s':'')+' approaching 90 days — review pricing</div>';
+
+  // Build cards
+  var grid = document.getElementById('smGrid');
+  var empty = document.getElementById('smEmpty');
+
+  if(!D.length || !list.length){
+    empty.style.display = 'block';
+    if(!D.length){
+      empty.querySelector('.empty-title').textContent = 'No data yet';
+      empty.querySelector('.empty-sub').textContent = 'Import inventory to see the sell model view';
+    } else {
+      empty.querySelector('.empty-title').textContent = 'No combos match your filters';
+      empty.querySelector('.empty-sub').textContent = 'Try adjusting the minimum days or search';
+    }
+    // Remove any old cards
+    var old = grid.querySelectorAll('.sm-card');
+    old.forEach(function(el){el.remove();});
+    return;
+  }
+
+  empty.style.display = 'none';
+  var old = grid.querySelectorAll('.sm-card');
+  old.forEach(function(el){el.remove();});
+
+  list.forEach(function(g,idx){
+    var urgency = g.maxDays>=90?'crit':g.maxDays>=60?'warn':'ok';
+    var borderColor = urgency==='crit'?'rgba(34,197,94,.5)':urgency==='warn'?'rgba(245,158,11,.4)':'rgba(59,130,246,.25)';
+    var headerBg = urgency==='crit'?'rgba(34,197,94,.1)':urgency==='warn'?'rgba(245,158,11,.1)':'rgba(59,130,246,.08)';
+    var badgeColor = urgency==='crit'?'#4ade80':urgency==='warn'?'#fbbf24':'#93c5fd';
+    var actionLabel = urgency==='crit'?'⚡ Priority Unit':urgency==='warn'?'Review':'Monitor';
+    var actionCls = urgency==='crit'?'act-red':urgency==='warn'?'act-amber':'act-blue';
+    var rankLabel = idx===0?'#1 Priority':idx===1?'#2 Priority':idx===2?'#3 Priority':'';
+
+    // Build unit rows (show top 5 oldest units)
+    var sorted = g.units.slice().sort(function(a,b){return b.days-a.days;});
+    var unitRows = sorted.slice(0,5).map(function(v){
+      var flags = '';
+      if(v.isSafety) flags += '<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:rgba(239,68,68,.2);color:#f87171;margin-left:4px">Safety</span>';
+      if(v.isReceipt) flags += '<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:rgba(245,158,11,.2);color:#fbbf24;margin-left:4px">Receipt</span>';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
+        +'<span style="font-family:var(--mono);font-size:11px;color:var(--muted)">'+v.stock+'</span>'
+        +'<div style="display:flex;align-items:center;gap:4px">'
+        +'<span style="font-size:11px;font-weight:500;color:'+ageColor(v.days)+'">'+v.days+'d</span>'
+        + flags
+        +'</div>'
+        +'</div>';
+    }).join('');
+    var moreCount = sorted.length - 5;
+    if(moreCount>0) unitRows += '<div style="font-size:11px;color:var(--muted);text-align:center;padding:5px 0">+'+moreCount+' more unit'+(moreCount>1?'s':'')+'</div>';
+
+    var card = document.createElement('div');
+    card.className = 'sm-card';
+    card.style.cssText = 'background:var(--surface);border:1px solid '+borderColor+';border-radius:var(--radius);overflow:hidden';
+
+    card.innerHTML =
+      // Header
+      '<div style="background:'+headerBg+';padding:12px 14px;border-bottom:1px solid '+borderColor+'">'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start">'
+          +'<div>'
+            +'<div style="font-size:15px;font-weight:600;color:var(--text)">'+g.model+'</div>'
+            +'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+g.modelFull+'</div>'
+          +'</div>'
+          +(rankLabel?'<span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:'+borderColor+';color:'+badgeColor+'">'+rankLabel+'</span>':'')
+        +'</div>'
+        +'<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'
+          +'<div style="background:var(--surface2);border-radius:6px;padding:5px 10px;text-align:center">'
+            +'<div style="font-size:18px;font-weight:600;color:'+badgeColor+'">'+g.maxDays+'d</div>'
+            +'<div style="font-size:10px;color:var(--muted)">Max age</div>'
+          +'</div>'
+          +'<div style="background:var(--surface2);border-radius:6px;padding:5px 10px;text-align:center">'
+            +'<div style="font-size:18px;font-weight:600;color:var(--text)">'+g.avgDays+'d</div>'
+            +'<div style="font-size:10px;color:var(--muted)">Avg age</div>'
+          +'</div>'
+          +'<div style="background:var(--surface2);border-radius:6px;padding:5px 10px;text-align:center">'
+            +'<div style="font-size:18px;font-weight:600;color:var(--text)">'+g.units.length+'</div>'
+            +'<div style="font-size:10px;color:var(--muted)">Units</div>'
+          +'</div>'
+          +'<div style="background:var(--surface2);border-radius:6px;padding:5px 10px;text-align:center;flex:1;min-width:60px">'
+            +'<div style="font-size:13px;font-weight:600;color:var(--text)">'+g.color+'</div>'
+            +'<div style="font-size:10px;color:var(--muted)">Color</div>'
+          +'</div>'
+        +'</div>'
+      +'</div>'
+      // Unit list
+      +'<div style="padding:8px 14px">'
+        +'<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Stock units</div>'
+        + unitRows
+      +'</div>'
+      // Footer
+      +'<div style="padding:10px 14px;border-top:1px solid rgba(255,255,255,.05);display:flex;justify-content:flex-end">'
+        +'<button class="'+actionCls+'" style="font-size:11px">'+actionLabel+'</button>'
+      +'</div>';
+
+    grid.appendChild(card);
+  });
+}
+
+
+function sortTable(tab, col){
+  if(SORT[tab].col===col){
+    SORT[tab].dir = SORT[tab].dir==='desc'?'asc':'desc';
+  } else {
+    SORT[tab].col=col;
+    SORT[tab].dir='desc';
+  }
+  // Update header classes
+  var tblId = tab==='ag'?'agTbl':tab+'Tbl';
+  var tbl = document.getElementById(tblId);
+  if(tbl){
+    tbl.querySelectorAll('th.sortable').forEach(function(th){
+      th.classList.remove('sort-asc','sort-desc');
+    });
+    var ths = tbl.querySelectorAll('th.sortable');
+    ths.forEach(function(th){
+      if((col==='year'&&th.textContent.indexOf('Year')>=0)||(col==='days'&&th.textContent.indexOf('Days')>=0)){
+        th.classList.add(SORT[tab].dir==='asc'?'sort-asc':'sort-desc');
+      }
+    });
+  }
+  if(tab==='ov') renderOvTable();
+  else if(tab==='n') renderNTable();
+  else if(tab==='u') renderUTable();
+  else if(tab==='ag') renderAgTable();
+}
+
+function applySortToData(data, tab){
+  var col=SORT[tab].col, dir=SORT[tab].dir;
+  return data.slice().sort(function(a,b){
+    var av = col==='year'?a.year:a.days;
+    var bv = col==='year'?b.year:b.days;
+    return dir==='asc'?(av-bv):(bv-av);
+  });
+}
+
+</script>
+</body>
+</html>
