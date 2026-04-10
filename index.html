@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>MVP Hyundai — Inventory Dashboard</title>
+<title>MVP Toyota — Inventory Dashboard</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -335,7 +335,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 <div class="lock-screen" id="lockScreen">
   <div class="lock-logo">&#128274;</div>
   <div class="lock-title">MVP Motor Group</div>
-  <div class="lock-sub">Hyundai &middot; Salesperson Dashboard</div>
+  <div class="lock-sub">Toyota &middot; Salesperson Dashboard</div>
   <input class="lock-input" id="lockInput" type="password" placeholder="Contrase&ntilde;a" onkeydown="if(event.key==='Enter')checkPassword()"/>
   <button class="lock-btn" onclick="checkPassword()">Entrar</button>
   <div class="lock-err" id="lockErr">Contrase&ntilde;a incorrecta</div>
@@ -345,7 +345,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 <div class="nav">
   <div class="nav-logo">
     <div class="nav-logo-icon" style="flex-shrink:0">&#9776;</div>
-    <div><div class="nav-title">MVP Motor Group</div><div class="nav-sub">CDK/DMS &middot; Hyundai Dealership</div></div>
+    <div><div class="nav-title">MVP Motor Group</div><div class="nav-sub">CDK/DMS &middot; Toyota Dealership</div></div>
   </div>
   <div class="nav-right">
     <span class="last-import" id="lastImportBadge"></span>
@@ -517,7 +517,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
   </div>
 </div>
 
-<div class="footer"><span id="footerText">No data loaded &middot; Click "Import File" to get started</span><span>MVP Motor Group &mdash; Hyundai v3.1 &middot; Salesperson Edition</span></div>
+<div class="footer"><span id="footerText">No data loaded &middot; Click "Import File" to get started</span><span>MVP Motor Group &mdash; Toyota v3.1 &middot; Salesperson Edition</span></div>
 
 <!-- COMPARATOR BOTTOM BAR -->
 <div class="cmp-bar" id="cmpBar">
@@ -742,7 +742,7 @@ function parseCSV(raw){
     var cmpgn=g(vals,'cmpgn');
     var trade=g(vals,'trade');
     rows.push({
-      stock:stockVal,year:year,make:'Hyundai',
+      stock:stockVal,year:year,make:'Toyota',
       model:model4,modelFull:modelFull,modelCode:modelCode,
       type:typeVal,color:g(vals,'color')||'—',
       srp:isNaN(srp)?0:srp,invoice:inv,
