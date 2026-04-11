@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>MVP Hyundai — Inventory Dashboard</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0f14;--surface:#161920;--surface2:#1c1f2a;
+  --border:rgba(255,255,255,0.08);--text:#e8eaf0;--muted:#8b92a8;
+  --accent:#0054A4;--green:#22c55e;--amber:#eab308;--red:#dc2626;--orange:#f97316;--purple:#a78bfa;--teal:#2dd4bf;
+  --font:system-ui,-apple-system,'Segoe UI',sans-serif;--mono:'Courier New',monospace;--radius:10px;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;min-height:100vh}
+/* NAV */
+.nav{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:var(--surface);border-bottom:1px solid var(--border)}
+.nav-logo{display:flex;align-items:center;gap:10px}
+.nav-logo-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px}
+.nav-title{font-size:15px;font-weight:600}
+.nav-sub{font-size:12px;color:var(--muted);margin-top:1px}
+.nav-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.nav-date{font-size:12px;color:var(--muted);background:var(--surface2);padding:6px 12px;border-radius:6px;border:1px solid var(--border)}
+.badge-live{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--green);display:none}
+.dot-live{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.btn-import{display:flex;align-items:center;gap:6px;padding:7px 14px;background:var(--accent);color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
+.btn-import:hover{opacity:.85}
+/* TABS */
+.tabs{display:flex;gap:4px;padding:12px 24px 0;border-bottom:1px solid var(--border);background:var(--surface)}
+.tab{padding:8px 16px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;user-select:none}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+/* LEGEND */
+.legend-bar{display:flex;gap:20px;padding:9px 24px;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}
+.legend-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+/* TAB VIEWS */
+.tab-view{display:none}.tab-view.active{display:block}
+/* FILTERS */
+.filters{display:flex;align-items:center;gap:8px;padding:12px 24px;background:var(--surface2);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.flabel{font-size:12px;color:var(--muted)}
+.fbtn{padding:5px 12px;font-size:12px;font-weight:500;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s}
+.fbtn:hover,.fbtn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.fsep{width:1px;height:18px;background:var(--border);margin:0 4px}
+.search{flex:1;max-width:220px;padding:6px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;font-family:inherit;outline:none}
+.search:focus{border-color:var(--accent)}
+.search::placeholder{color:var(--muted)}
+/* ALERTS */
+.alerts{padding:10px 24px;display:flex;gap:8px;flex-wrap:wrap;min-height:0}
+.alert{display:flex;align-items:center;gap:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:7px;padding:7px 12px;font-size:12px;color:#fca5a5}
+.alert-amber{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);color:#fcd34d}
+.alert-green{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.3);color:#4ade80}
+/* GRIDS */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:14px 24px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:0 24px 14px}
+.g2{display:grid;grid-template-columns:2fr 1fr;gap:14px;padding:0 24px 14px}
+.g2b{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 24px 14px}
+.gpad{padding:0 24px 14px}
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px}
+.card-title{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px}
+.kpi-value{font-size:28px;font-weight:600;letter-spacing:-1px;line-height:1;margin-bottom:5px}
+.kpi-sub{color:var(--muted);font-size:12px}
+/* AGING BARS */
+.arow{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.alabel{font-size:12px;color:var(--muted);width:68px;flex-shrink:0}
+.atrack{flex:1;height:7px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.afill{height:100%;border-radius:4px;transition:width .5s}
+.acount{font-size:12px;font-weight:500;width:28px;text-align:right}
+.apct{font-size:11px;color:var(--muted);width:32px;text-align:right}
+/* CHART CANVAS */
+.chart-wrap{position:relative;width:100%}
+/* TABLE */
+.sec-head{display:flex;align-items:center;justify-content:space-between;padding:0 24px;margin-bottom:7px}
+.sec-title{font-size:13px;font-weight:500}
+.sec-sub{font-size:12px;color:var(--muted)}
+.tbl-wrap{padding:0 24px 24px}
+.tbl-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;color:var(--muted);font-size:11px;font-weight:500;letter-spacing:.5px;text-transform:uppercase;padding:0 10px 9px;border-bottom:1px solid var(--border)}
+.tbl td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(255,255,255,.025)}
+.tbl th.sortable{cursor:pointer;user-select:none}
+.tbl th.sortable:hover{color:var(--text)}
+.tbl th.sort-asc::after{content:' ▲';font-size:9px;color:var(--accent)}
+.tbl th.sort-desc::after{content:' ▼';font-size:9px;color:var(--accent)}
+.tbl th:first-child,.tbl td:first-child{padding-left:18px}
+.tbl th:last-child,.tbl td:last-child{padding-right:18px;text-align:right}
+/* ROW HIGHLIGHTS */
+/* PILLS / BADGES */
+.age-pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
+.age-ok{background:rgba(34,197,94,.15);color:#4ade80}
+.age-warn{background:rgba(245,158,11,.15);color:#fbbf24}
+.age-crit{background:rgba(249,115,22,.15);color:#fb923c}
+.type-badge{font-size:11px;padding:2px 8px;border-radius:12px;background:rgba(249,115,22,.12);color:#fdba74}
+.status-badge{display:inline-block;margin-left:6px;font-size:10px;padding:1px 6px;border-radius:10px;font-weight:500}
+.sb-safety{background:rgba(239,68,68,.2);color:#f87171;border:1px solid rgba(239,68,68,.35)}
+.sb-receipt{background:rgba(245,158,11,.2);color:#fbbf24;border:1px solid rgba(245,158,11,.35)}
+.stock-tag{font-family:var(--mono);font-size:11px;color:var(--muted)}
+/* ACTION BTNS */
+.act-red{padding:3px 9px;font-size:11px;background:rgba(249,115,22,.15);color:#fb923c;border:1px solid rgba(249,115,22,.3);border-radius:5px;cursor:pointer;font-family:inherit}
+.act-amber{padding:3px 9px;font-size:11px;background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3);border-radius:5px;cursor:pointer;font-family:inherit}
+.act-blue{padding:3px 9px;font-size:11px;background:rgba(249,115,22,.12);color:#fdba74;border:1px solid rgba(249,115,22,.22);border-radius:5px;cursor:pointer;font-family:inherit}
+/* EMPTY STATE */
+.empty{text-align:center;padding:52px 20px;color:var(--muted)}
+.empty-icon{font-size:38px;margin-bottom:12px}
+.empty-title{font-size:15px;font-weight:500;color:var(--text);margin-bottom:5px}
+.empty-sub{font-size:13px;margin-bottom:18px}
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:680px;max-width:96vw;max-height:92vh;overflow-y:auto;padding:26px;position:relative}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:3px}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:18px}
+.modal-close{position:absolute;top:14px;right:18px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;font-family:inherit;line-height:1}
+.modal-close:hover{color:var(--text)}
+/* DROP ZONE */
+.drop-zone{border:2px dashed rgba(249,115,22,.35);border-radius:9px;padding:22px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:14px}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:rgba(235,10,30,.05)}
+.drop-zone-title{font-size:14px;font-weight:500;margin-bottom:5px}
+.drop-zone-sub{font-size:12px;color:var(--muted)}
+.drop-file-name{font-size:12px;color:var(--green);margin-top:7px;display:none}
+.browse-link{color:var(--accent);cursor:pointer;text-decoration:underline;background:none;border:none;font-size:12px;font-family:inherit;padding:0}
+/* DIVIDER */
+.divider{display:flex;align-items:center;gap:10px;margin:12px 0;font-size:12px;color:var(--muted)}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+/* FORMAT BOX */
+.format-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:13px 15px;margin-bottom:16px}
+.format-title{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.col-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.col-tag{padding:3px 9px;border-radius:20px;font-size:11px;font-family:var(--mono);background:rgba(249,115,22,.15);color:#fdba74;border:1px solid rgba(249,115,22,.25)}
+.example-csv{background:#0a0d14;border-radius:7px;padding:11px 13px;font-family:var(--mono);font-size:11px;color:#4ade80;line-height:1.7;overflow-x:auto;white-space:pre;border:1px solid rgba(74,222,128,.15)}
+/* TEXTAREA */
+.csv-area{width:100%;height:150px;background:#0a0d14;border:1px solid var(--border);border-radius:8px;padding:12px;font-family:var(--mono);font-size:12px;color:#e8eaf0;resize:vertical;outline:none;line-height:1.6}
+.csv-area:focus{border-color:var(--accent)}
+.csv-area::placeholder{color:#3b4260}
+/* PARSE RESULT */
+.parse-result{margin-top:10px;padding:9px 13px;border-radius:7px;font-size:13px;display:none}
+.pr-ok{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);color:#4ade80}
+.pr-err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#f87171}
+.pr-warn{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);color:#fbbf24}
+/* PREVIEW */
+.preview-wrap{margin-top:14px;overflow-x:auto;max-height:180px;border:1px solid var(--border);border-radius:8px;display:none}
+.preview-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.preview-tbl th{background:var(--surface2);color:var(--muted);font-size:11px;padding:7px 11px;text-align:left;position:sticky;top:0;border-bottom:1px solid var(--border)}
+.preview-tbl td{padding:6px 11px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text)}
+.preview-tbl tr:last-child td{border-bottom:none}
+/* MODAL ACTIONS */
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+.btn-ghost{padding:7px 16px;background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--muted);font-size:13px;cursor:pointer;font-family:inherit}
+.btn-ghost:hover{border-color:rgba(255,255,255,.2);color:var(--text)}
+.btn-primary{padding:7px 18px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
+.btn-primary:hover{opacity:.85}
+.btn-primary:disabled{opacity:.35;cursor:not-allowed}
+.last-import{font-size:11px;color:var(--muted);padding:4px 9px;background:var(--surface2);border-radius:5px;border:1px solid var(--border);display:none}
+/* FOOTER */
+.footer{padding:12px 24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;color:var(--muted);font-size:11px}
+
+/* ══════════════════ COTD BANNER ══════════════════ */
+.cotd-banner{display:none;margin:12px 24px 0;background:linear-gradient(135deg,rgba(245,158,11,.15) 0%,rgba(251,146,60,.08) 100%);border:1px solid rgba(245,158,11,.4);border-radius:12px;padding:14px 18px;align-items:center;gap:16px;flex-wrap:wrap}
+.cotd-banner.show{display:flex}
+.cotd-star{font-size:28px;flex-shrink:0}
+.cotd-info{flex:1;min-width:160px}
+.cotd-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:#f59e0b;margin-bottom:3px}
+.cotd-name{font-size:17px;font-weight:700;color:#fff;line-height:1.1}
+.cotd-detail{font-size:12px;color:var(--muted);margin-top:3px}
+.cotd-chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.cotd-chip{font-size:11px;padding:3px 9px;border-radius:12px;font-weight:500}
+.cotd-chip-days{background:rgba(239,68,68,.2);color:#f87171;border:1px solid rgba(239,68,68,.3)}
+.cotd-chip-stock{background:rgba(249,115,22,.15);color:#fdba74;border:1px solid rgba(249,115,22,.25);font-family:var(--mono)}
+.cotd-chip-price{background:rgba(34,197,94,.12);color:#4ade80;border:1px solid rgba(34,197,94,.25)}
+.cotd-chip-color{background:rgba(168,139,250,.12);color:#a78bfa;border:1px solid rgba(168,139,250,.25)}
+
+/* ══════════════════ CLIENT SEARCH TAB ══════════════════ */
+.cs-section{padding:14px 24px 0}
+.cs-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px}
+.cs-filters{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+.cs-group{display:flex;flex-direction:column;gap:5px;min-width:130px}
+.cs-label{font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+.cs-select{padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:13px;font-family:inherit;outline:none;cursor:pointer}
+.cs-select:focus{border-color:var(--accent)}
+.cs-input{padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:13px;font-family:inherit;outline:none;width:110px}
+.cs-input:focus{border-color:var(--accent)}
+.cs-input::placeholder{color:var(--muted)}
+.cs-btn{padding:8px 18px;background:var(--accent);color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap;align-self:flex-end}
+.cs-btn:hover{opacity:.85}
+.cs-results-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+.cs-count{font-size:13px;color:var(--muted)}
+.cs-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:24px}
+.cs-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .15s}
+.cs-card:hover{border-color:rgba(249,115,22,.4)}
+.cs-card-header{padding:12px 14px 10px;border-bottom:1px solid var(--border)}
+.cs-card-model{font-size:14px;font-weight:600;color:var(--text)}
+.cs-card-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.cs-card-body{padding:10px 14px}
+.cs-card-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.03)}
+.cs-card-row:last-child{border-bottom:none}
+.cs-card-key{color:var(--muted)}
+.cs-card-val{color:var(--text);font-weight:500}
+.cs-card-footer{padding:9px 14px;border-top:1px solid var(--border);display:flex;gap:7px;justify-content:space-between;align-items:center}
+.cs-add-cmp{padding:4px 10px;font-size:11px;background:rgba(249,115,22,.12);color:#fdba74;border:1px solid rgba(249,115,22,.25);border-radius:5px;cursor:pointer;font-family:inherit}
+.cs-add-cmp.added{background:rgba(34,197,94,.12);color:#4ade80;border-color:rgba(34,197,94,.25)}
+.cs-empty-results{text-align:center;padding:40px 20px;color:var(--muted);grid-column:1/-1}
+
+/* ══════════════════ COMPARATOR ══════════════════ */
+.cmp-bar{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:10px 24px;z-index:100;align-items:center;gap:12px;flex-wrap:wrap}
+.cmp-bar.visible{display:flex}
+.cmp-bar-label{font-size:12px;color:var(--muted);flex-shrink:0}
+.cmp-pill{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:4px 10px 4px 12px;font-size:12px}
+.cmp-pill-x{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;line-height:1;padding:0 2px}
+.cmp-pill-x:hover{color:var(--text)}
+.cmp-go{padding:7px 16px;background:var(--accent);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit}
+.cmp-clear{padding:7px 12px;background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit}
+.cmp-spacer{flex:1}
+
+/* COMPARATOR MODAL */
+.cmp-modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:90vw;max-width:880px;max-height:88vh;overflow-y:auto;padding:24px;position:relative}
+.cmp-grid{display:grid;gap:14px;margin-top:16px}
+.cmp-col{background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.cmp-col-head{padding:12px 14px;border-bottom:1px solid var(--border);background:rgba(235,10,30,.07)}
+.cmp-col-model{font-size:15px;font-weight:600;color:var(--text)}
+.cmp-col-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.cmp-row{display:flex;justify-content:space-between;padding:8px 14px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.04)}
+.cmp-row:last-child{border-bottom:none}
+.cmp-row-key{color:var(--muted)}
+.cmp-row-val{font-weight:500;color:var(--text)}
+.cmp-row-best{color:#4ade80;font-weight:600}
+.cmp-row-worst{color:#f87171}
+
+/* ══════════════════ NOTES ══════════════════ */
+.note-btn{padding:3px 8px;font-size:11px;background:rgba(168,139,250,.12);color:#a78bfa;border:1px solid rgba(168,139,250,.25);border-radius:5px;cursor:pointer;font-family:inherit}
+.note-btn.has-note{background:rgba(168,139,250,.25);color:#c4b5fd;border-color:rgba(168,139,250,.5)}
+.notes-modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:480px;max-width:94vw;padding:22px;position:relative}
+.note-textarea{width:100%;height:110px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:inherit;font-size:13px;color:var(--text);resize:vertical;outline:none;line-height:1.5}
+.note-textarea:focus{border-color:rgba(168,139,250,.5)}
+.note-textarea::placeholder{color:var(--muted)}
+.note-ts{font-size:11px;color:var(--muted);margin-top:6px}
+
+/* ══════════════════ MI TURNO HOY ══════════════════ */
+.mt-setup{display:flex;align-items:center;gap:12px;padding:16px 24px;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.mt-greeting{font-size:13px;color:var(--muted)}
+.mt-name-input{padding:7px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:14px;font-family:inherit;outline:none;width:180px}
+.mt-name-input:focus{border-color:var(--accent)}
+.mt-name-input::placeholder{color:var(--muted)}
+.mt-start-btn{padding:7px 16px;background:var(--accent);color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
+.mt-start-btn:hover{opacity:.85}
+.mt-body{padding:14px 24px}
+.mt-hello{font-size:20px;font-weight:700;color:var(--text);margin-bottom:2px}
+.mt-date{font-size:12px;color:var(--muted);margin-bottom:16px}
+.mt-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:10px;margin-top:20px;display:flex;align-items:center;gap:6px}
+.mt-priority-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;margin-bottom:8px}
+.mt-pcard{border-radius:10px;overflow:hidden;border:1px solid}
+.mt-pcard-head{padding:12px 14px 10px;display:flex;justify-content:space-between;align-items:flex-start}
+.mt-pcard-rank{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:2px 8px;border-radius:10px}
+.mt-pcard-model{font-size:15px;font-weight:700;margin-top:4px;color:var(--text)}
+.mt-pcard-full{font-size:11px;color:var(--muted);margin-top:1px}
+.mt-pcard-body{padding:8px 14px 12px}
+.mt-stat-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.mt-stat{text-align:center;background:rgba(255,255,255,.04);border-radius:7px;padding:6px 12px;min-width:60px}
+.mt-stat-val{font-size:16px;font-weight:700;line-height:1}
+.mt-stat-key{font-size:10px;color:var(--muted);margin-top:2px}
+.mt-stock-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.mt-stock-tag{font-family:var(--mono);font-size:10px;padding:2px 7px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:4px;color:var(--muted)}
+.mt-tip-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.mt-tip{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:13px 15px}
+.mt-tip-icon{font-size:20px;margin-bottom:7px}
+.mt-tip-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px}
+.mt-tip-text{font-size:11px;color:var(--muted);line-height:1.5}
+.mt-summary-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.mt-sum-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:12px 14px;text-align:center}
+.mt-sum-val{font-size:22px;font-weight:700;line-height:1;margin-bottom:3px}
+.mt-sum-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+
+/* ══════════════════ MOBILE ADJUSTMENTS ══════════════════ */
+@media (max-width:768px){
+  .mt-setup{padding:12px 14px;gap:8px}
+  .mt-name-input{width:140px}
+  .mt-body{padding:10px 14px}
+  .mt-summary-bar{grid-template-columns:1fr 1fr;gap:8px}
+  .mt-priority-cards{grid-template-columns:1fr;gap:10px}
+  .mt-tip-cards{grid-template-columns:1fr 1fr;gap:8px}
+  .mt-sum-val{font-size:18px}
+  .cotd-banner{margin:10px 14px 0;padding:12px 14px}
+  .cotd-name{font-size:15px}
+  .cs-section{padding:10px 14px 0}
+  .cs-filters{padding:12px 12px}
+  .cs-group{min-width:100px}
+  .cs-cards{grid-template-columns:1fr;gap:10px}
+  .cmp-bar{padding:10px 14px}
+  .cmp-modal{padding:18px 14px}
+  .cmp-grid{grid-template-columns:1fr!important}
+  .note-textarea{height:90px}
+}
+
+
+
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<div class="nav">
+  <div class="nav-logo">
+    <div class="nav-logo-icon" style="flex-shrink:0">&#9776;</div>
+    <div><div class="nav-title">MVP Motor Group</div><div class="nav-sub">CDK/DMS &middot; Hyundai Dealership</div></div>
+  </div>
+  <div class="nav-right">
+    <span class="last-import" id="lastImportBadge"></span>
+    <div class="badge-live" id="syncBadge"><span class="dot-live"></span> Data loaded</div>
+    <div class="nav-date" id="navDate"></div>
+    <button class="btn-import" onclick="openModal()">&#8679; <span class="btn-import-text">Import File</span></button>
+  </div>
+</div>
+
+<!-- CAR OF THE DAY BANNER -->
+<div class="cotd-banner" id="cotdBanner">
+  <div class="cotd-star">&#11088;</div>
+  <div class="cotd-info">
+    <div class="cotd-label">&#128293; Unidad del D&iacute;a &mdash; Oldest Sellable Unit</div>
+    <div class="cotd-name" id="cotdBannerModel">&#8212;</div>
+    <div class="cotd-detail" id="cotdBannerFull"></div>
+    <div class="cotd-chips">
+      <span class="cotd-chip cotd-chip-days" id="cotdBannerDays" style="display:none"></span>
+      <span class="cotd-chip cotd-chip-stock" id="cotdBannerStock" style="display:none"></span>
+      <span class="cotd-chip cotd-chip-price" id="cotdBannerPrice" style="display:none"></span>
+      <span class="cotd-chip cotd-chip-color" id="cotdBannerColor" style="display:none"></span>
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('overview',this)">Overview</div>
+  <div class="tab" onclick="switchTab('miturno',this)">&#128100; Mi Turno</div>
+  <div class="tab" onclick="switchTab('clientsearch',this)">&#128269; Buscar para Cliente</div>
+</div>
+
+<!-- LEGEND -->
+<div class="legend-bar">
+  <div class="legend-item"><div class="legend-dot" style="background:rgba(239,68,68,.5);border:1px solid rgba(239,68,68,.7)"></div>Safety Campaign &mdash; cannot be sold</div>
+  <div class="legend-item"><div class="legend-dot" style="background:rgba(245,158,11,.5);border:1px solid rgba(245,158,11,.7)"></div>Trade Recibido &mdash; received trade</div>
+  <div class="legend-item"><div class="legend-dot" style="background:rgba(249,115,22,.4);border:1px solid rgba(249,115,22,.6)"></div>90+ days &mdash; price down</div>
+  <div class="legend-item"><div class="legend-dot" style="background:rgba(245,158,11,.3);border:1px solid rgba(245,158,11,.5)"></div>60&ndash;90 days &mdash; review</div>
+</div>
+
+<!-- TAB: OVERVIEW -->
+<div class="tab-view active" id="view-overview">
+  <div class="filters">
+    <span class="flabel">AGE</span>
+    <button class="fbtn" onclick="setF('ovAge','0-30',this)">&lt;30d</button>
+    <button class="fbtn" onclick="setF('ovAge','30-60',this)">30&ndash;60d</button>
+    <button class="fbtn" onclick="setF('ovAge','60-90',this)">60&ndash;90d</button>
+    <button class="fbtn" onclick="setF('ovAge','90-9999',this)">90+ &#9888;</button>
+    <div class="fsep"></div>
+    <input class="search" id="ovSearch" placeholder="Search serial / model / VIN" oninput="renderOvTable()"/>
+  </div>
+  <div class="alerts" id="alertStrip"></div>
+  <div class="g4">
+    <div class="card"><div class="card-title">Total Units</div><div class="kpi-value" style="color:var(--accent)" id="kpiTotal">—</div><div class="kpi-sub" id="kpiTotalSub">No data</div></div>
+    <div class="card"><div class="card-title">Safety Campaign</div><div class="kpi-value" style="color:var(--red)" id="kpiAvg">—</div><div class="kpi-sub" id="kpiAvgSub">No data</div></div>
+    <div class="card"><div class="card-title">90+ Day Units</div><div class="kpi-value" style="color:var(--red)" id="kpi90">—</div><div class="kpi-sub" id="kpi90Sub">No data</div></div>
+    <div class="card" id="cotdCard" style="border-color:rgba(245,158,11,.35);background:linear-gradient(135deg,var(--surface) 60%,rgba(245,158,11,.06))">
+      <div class="card-title" style="display:flex;align-items:center;gap:6px">&#127775; Car of the Day</div>
+      <div id="cotdModel" style="font-size:16px;font-weight:600;color:var(--amber);margin-bottom:2px;line-height:1.2">—</div>
+      <div id="cotdSub" style="font-size:11px;color:var(--muted);margin-bottom:6px">No data loaded</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span id="cotdDays" style="font-size:11px;padding:2px 8px;border-radius:10px;background:rgba(245,158,11,.15);color:#fbbf24;display:none"></span>
+        <span id="cotdStock" style="font-size:11px;padding:2px 8px;border-radius:10px;background:rgba(249,115,22,.12);color:#fdba74;font-family:var(--mono);display:none"></span>
+        <span id="cotdColor" style="font-size:11px;padding:2px 8px;border-radius:10px;background:rgba(168,139,250,.12);color:#a78bfa;display:none"></span>
+      </div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Aging Distribution</div>
+      <div class="chart-wrap" style="height:220px"><canvas id="agingChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Aging Buckets</div>
+      <div id="agingBars"><div style="color:var(--muted);font-size:13px;text-align:center;padding:38px 0">Import data to see</div></div>
+    </div>
+  </div>
+  <div class="sec-head"><span class="sec-title" id="ovTitle">Inventory</span><span class="sec-sub" id="ovCount"></span></div>
+  <div class="tbl-wrap">
+    <div class="tbl-card">
+      <div class="empty" id="ovEmpty"><div class="empty-icon">&#128203;</div><div class="empty-title">No data yet</div><div class="empty-sub">Click "Import File" to load your CDK export</div><button class="btn-import" onclick="openModal()">&#8679; <span class="btn-import-text">Import File</span></button></div>
+      <table class="tbl" id="ovTbl" style="display:none"><thead><tr><th>Serial No.</th><th class="sortable" onclick="sortTable('ov','year')">Year &middot; Model</th><th>Ext.</th><th>Invoice</th><th>Total SRP</th><th class="sortable" onclick="sortTable('ov','days')">Days</th><th>Bar</th><th>Action</th></tr></thead><tbody id="ovBody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: MI TURNO HOY -->
+<div class="tab-view" id="view-miturno">
+  <div class="mt-setup" id="mtSetup">
+    <span class="mt-greeting">&#128075; &iquest;C&oacute;mo te llamas?</span>
+    <input class="mt-name-input" id="mtNameInput" placeholder="Tu nombre..." maxlength="30" onkeydown="if(event.key==='Enter')startMiTurno()"/>
+    <button class="mt-start-btn" onclick="startMiTurno()">Ver mi turno &#8594;</button>
+  </div>
+  <div class="mt-body" id="mtBody" style="display:none">
+    <div class="mt-hello" id="mtHello"></div>
+    <div class="mt-date" id="mtDateLine"></div>
+    <div class="mt-summary-bar" id="mtSummaryBar"></div>
+    <div class="mt-section-title">&#128308; Unidades Prioritarias &mdash; Empuja Hoy</div>
+    <div class="mt-priority-cards" id="mtPriorityCards"></div>
+    <div class="mt-section-title">&#128161; Tips del D&iacute;a</div>
+    <div class="mt-tip-cards" id="mtTips"></div>
+    <div style="height:24px"></div>
+  </div>
+</div>
+
+<!-- TAB: CLIENT SEARCH -->
+<div class="tab-view" id="view-clientsearch">
+  <div class="cs-section">
+    <div class="cs-filters">
+      <div class="cs-group">
+        <span class="cs-label">Tipo de Veh&iacute;culo</span>
+        <select class="cs-select" id="csType">
+          <option value="">Todos</option>
+          <option value="sedan">Sed&aacute;n</option>
+          <option value="suv">SUV / Crossover</option>
+          <option value="truck">Pickup / Truck</option>
+          <option value="hybrid">H&iacute;brido</option>
+          <option value="coupe">Coupe / Sport</option>
+          <option value="van">Van / Minivan</option>
+        </select>
+      </div>
+      <div class="cs-group">
+        <span class="cs-label">Precio M&aacute;x (SRP)</span>
+        <select class="cs-select" id="csMaxPrice">
+          <option value="">Sin l&iacute;mite</option>
+          <option value="30000">Hasta $30,000</option>
+          <option value="40000">Hasta $40,000</option>
+          <option value="50000">Hasta $50,000</option>
+          <option value="60000">Hasta $60,000</option>
+          <option value="70000">Hasta $70,000</option>
+        </select>
+      </div>
+      <div class="cs-group">
+        <span class="cs-label">Precio M&iacute;n (SRP)</span>
+        <select class="cs-select" id="csMinPrice">
+          <option value="">Sin m&iacute;nimo</option>
+          <option value="25000">Desde $25,000</option>
+          <option value="35000">Desde $35,000</option>
+          <option value="45000">Desde $45,000</option>
+          <option value="55000">Desde $55,000</option>
+        </select>
+      </div>
+      <div class="cs-group">
+        <span class="cs-label">A&ntilde;o</span>
+        <select class="cs-select" id="csYear">
+          <option value="">Todos</option>
+          <option value="2026">2026</option>
+          <option value="2025">2025</option>
+          <option value="2024">2024</option>
+        </select>
+      </div>
+      <div class="cs-group">
+        <span class="cs-label">Buscar Modelo</span>
+        <input class="cs-input" id="csSearch" placeholder="Ej: Corolla, RAV4..." oninput="runClientSearch()"/>
+      </div>
+      <button class="cs-btn" onclick="runClientSearch()">&#128269; Buscar</button>
+    </div>
+    <div class="cs-results-head">
+      <span class="cs-count" id="csResultCount"></span>
+      <span style="font-size:12px;color:var(--muted)">Haz clic en <strong style="color:#fdba74">+ Comparar</strong> para comparar unidades</span>
+    </div>
+    <div class="cs-cards" id="csCards">
+      <div class="cs-empty-results">
+        <div style="font-size:32px;margin-bottom:10px">&#128269;</div>
+        <div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:5px">Selecciona filtros y presiona Buscar</div>
+        <div style="font-size:12px">Encuentra el veh&iacute;culo perfecto para tu cliente</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer"><span id="footerText">No data loaded &middot; Click "Import File" to get started</span><span>MVP Motor Group &mdash; Hyundai v3.1 &middot; Salesperson Edition</span></div>
+
+<!-- COMPARATOR BOTTOM BAR -->
+<div class="cmp-bar" id="cmpBar">
+  <span class="cmp-bar-label">&#9878; Comparando:</span>
+  <div id="cmpPills" style="display:flex;gap:7px;flex-wrap:wrap"></div>
+  <div class="cmp-spacer"></div>
+  <button class="cmp-clear" onclick="clearComparator()">Limpiar</button>
+  <button class="cmp-go" onclick="openComparator()" id="cmpGoBtn" disabled>Ver Comparaci&oacute;n (0/3)</button>
+</div>
+
+<!-- NOTES MODAL -->
+<div class="overlay" id="notesModal">
+  <div class="notes-modal">
+    <button class="modal-close" onclick="closeNotesModal()">&#10005;</button>
+    <div class="modal-title" id="notesModalTitle">Nota &mdash; Stock #</div>
+    <div class="modal-sub" style="margin-bottom:12px">Esta nota queda guardada en tu dispositivo</div>
+    <textarea class="note-textarea" id="notesTextarea" placeholder="Ej: Cliente interesado, llama el viernes..."></textarea>
+    <div class="note-ts" id="notesTimestamp"></div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="btn-ghost" onclick="deleteNote()">Borrar nota</button>
+      <button class="btn-primary" onclick="saveNote()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- COMPARATOR MODAL -->
+<div class="overlay" id="cmpModal">
+  <div class="cmp-modal">
+    <button class="modal-close" onclick="closeCmpModal()">&#10005;</button>
+    <div class="modal-title">Comparaci&oacute;n de Unidades</div>
+    <div class="modal-sub">Compara detalles clave para presentar a tu cliente</div>
+    <div class="cmp-grid" id="cmpGrid"></div>
+    <div class="modal-actions" style="margin-top:18px">
+      <button class="btn-ghost" onclick="closeCmpModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="overlay" id="modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">&#10005;</button>
+    <div class="modal-title">Import CDK Inventory Export</div>
+    <div class="modal-sub">Upload your CSV or Excel file directly from your computer, or paste the data below.</div>
+    <div class="drop-zone" id="dropZone"
+      ondragover="event.preventDefault();this.classList.add('drag-over')"
+      ondragleave="this.classList.remove('drag-over')"
+      ondrop="handleDrop(event)">
+      <input type="file" id="fileInput" accept=".csv,.xlsx,.xls,.txt" style="display:none" onchange="handleFileSelect(this.files[0])"/>
+      <div class="drop-zone-title">&#128196; Drag &amp; drop your file here</div>
+      <div class="drop-zone-sub">Supports CSV &middot; or <button class="browse-link" onclick="document.getElementById('fileInput').click()">browse to upload</button></div>
+      <div class="drop-file-name" id="fileLabel"></div>
+    </div>
+    <div class="divider">or paste data manually</div>
+    <div class="format-box">
+      <div class="format-title">Expected columns (from your CDK export)</div>
+      <div class="col-tags">
+        <span class="col-tag">Model Name</span><span class="col-tag">Serial No.</span><span class="col-tag">Model</span><span class="col-tag">Ext.</span><span class="col-tag">Yr.</span><span class="col-tag">VIN</span><span class="col-tag">DIS</span><span class="col-tag">Invoice</span><span class="col-tag">Total SRP</span><span class="col-tag">Cmpgn.</span><span class="col-tag">Trade Status</span>
+      </div>
+      <pre class="example-csv">Model Name,Serial No.,Model,Ext.,Yr.,VIN,DIS,Invoice,Total SRP,Cmpgn.,Trade Status
+PRIUS SEDAN,T3065592,1170A,01L0,2026,JTDACAAU3T3065592,171,33140.00,35190.00,Safety Campaign,
+COROLLA LE CVT L4,T3039648,1695C,0089,2026,JTDB4MEE9T3039648,28,26114.00,27730.00,No campaign,Receipt</pre>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+      <span style="font-size:12px;color:var(--muted)">Paste data here:</span>
+      <button onclick="loadSample()" style="background:none;border:none;color:var(--accent);font-size:12px;cursor:pointer;font-family:inherit;padding:0">Load sample data &rarr;</button>
+    </div>
+    <textarea class="csv-area" id="csvInput" placeholder="Paste CSV data here (header row first)..." oninput="validateCSV()"></textarea>
+    <div class="parse-result" id="parseResult"></div>
+    <div class="preview-wrap" id="previewWrap"><table class="preview-tbl" id="previewTbl"></table></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" id="importBtn" onclick="commitImport()" disabled>Import &amp; Refresh Dashboard</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════ STATE ══════════════════ */
+var D=[],PB=[];
+var PRELOADED_DATA=[{"stock": "T3065592", "year": 2026, "make": "Toyota", "model": "1170", "modelFull": "PRIUS SEDAN", "modelCode": "1170A", "type": "New", "color": "01L0", "srp": 35190.0, "invoice": 33140.0, "days": 187, "vin": "JTDACAAU3T3065592", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "T3065994", "year": 2026, "make": "Toyota", "model": "1175", "modelFull": "PRIUS PRIME SEDAN", "modelCode": "1175B", "type": "New", "color": "0089", "srp": 36430.0, "invoice": 34093.58, "days": 121, "vin": "JTDACACU5T3065994", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "T3064745", "year": 2026, "make": "Toyota", "model": "1175", "modelFull": "PRIUS PRIME SEDAN", "modelCode": "1175B", "type": "New", "color": "01M2", "srp": 36430.0, "invoice": 34093.58, "days": 124, "vin": "JTDACACU1T3064745", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "T3066630", "year": 2026, "make": "Toyota", "model": "1175", "modelFull": "PRIUS PRIME SEDAN", "modelCode": "1175B", "type": "New", "color": "01M2", "srp": 36430.0, "invoice": 34093.58, "days": 104, "vin": "JTDACACU5T3066630", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "T3064832", "year": 2026, "make": "Toyota", "model": "1175", "modelFull": "PRIUS PRIME SEDAN", "modelCode": "1175B", "type": "New", "color": "03U5", "srp": 36430.0, "invoice": 34093.58, "days": 125, "vin": "JTDACACU7T3064832", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "T3056489", "year": 2026, "make": "Toyota", "model": "1175", "modelFull": "PRIUS PRIME SEDAN", "modelCode": "1175A", "type": "New", "color": "0089", "srp": 36427.0, "invoice": 34090.33, "days": 125, "vin": "JTDACACU2T3056489", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "T3056968", "year": 2026, "make": "Toyota", "model": "1175", "modelFull": "PRIUS PRIME SEDAN", "modelCode": "1175A", "type": "New", "color": "0089", "srp": 36427.0, "invoice": 34090.33, "days": 164, "vin": "JTDACACU3T3056968", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "T3060704", "year": 2026, "make": "Toyota", "model": "1175", "modelFull": "PRIUS PRIME SEDAN", "modelCode": "1175A", "type": "New", "color": "0089", "srp": 36427.0, "invoice": 34090.33, "days": 125, "vin": "JTDACACU0T3060704", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "T3057925", "year": 2026, "make": "Toyota", "model": "1175", "modelFull": "PRIUS PRIME SEDAN", "modelCode": "1175A", "type": "New", "color": "01L0", "srp": 36427.0, "invoice": 34090.33, "days": 116, "vin": "JTDACACU1T3057925", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "T3061502", "year": 2026, "make": "Toyota", "model": "1175", "modelFull": "PRIUS PRIME SEDAN", "modelCode": "1175A", "type": "New", "color": "0218", "srp": 36427.0, "invoice": 34090.33, "days": 121, "vin": "JTDACACU4T3061502", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "T3055198", "year": 2026, "make": "Toyota", "model": "1175", "modelFull": "PRIUS PRIME SEDAN", "modelCode": "1175A", "type": "New", "color": "05C5", "srp": 36427.0, "invoice": 34090.33, "days": 164, "vin": "JTDACACU8T3055198", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "T3529908", "year": 2026, "make": "Toyota", "model": "1684", "modelFull": "COROLLA SE CVT L4", "modelCode": "1684C", "type": "New", "color": "0089", "srp": 31910.0, "invoice": 30232.0, "days": 2, "vin": "JTDP4MCE4T3529908", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3530474", "year": 2026, "make": "Toyota", "model": "1684", "modelFull": "COROLLA SE CVT L4", "modelCode": "1684C", "type": "New", "color": "0089", "srp": 31910.0, "invoice": 30232.0, "days": 3, "vin": "JTDP4MCE2T3530474", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3529883", "year": 2026, "make": "Toyota", "model": "1684", "modelFull": "COROLLA SE CVT L4", "modelCode": "1684C", "type": "New", "color": "01K3", "srp": 31910.0, "invoice": 30232.0, "days": 2, "vin": "JTDP4MCE3T3529883", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3530202", "year": 2026, "make": "Toyota", "model": "1685", "modelFull": "COROLLA XSE CVT L4", "modelCode": "1685C", "type": "New", "color": "0089", "srp": 34830.0, "invoice": 32971.0, "days": 2, "vin": "JTDT4MCE4T3530202", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3529100", "year": 2026, "make": "Toyota", "model": "1685", "modelFull": "COROLLA XSE CVT L4", "modelCode": "1685C", "type": "New", "color": "0218", "srp": 34830.0, "invoice": 32971.0, "days": 34, "vin": "JTDT4MCE2T3529100", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3130264", "year": 2026, "make": "Toyota", "model": "1692", "modelFull": "COROLLA HYBRID 4DR LE HYBRID CVT", "modelCode": "1692B", "type": "New", "color": "01F7", "srp": 30555.0, "invoice": 29183.0, "days": 89, "vin": "JTDBCMFE6T3130264", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3129674", "year": 2026, "make": "Toyota", "model": "1692", "modelFull": "COROLLA HYBRID 4DR LE HYBRID CVT", "modelCode": "1692B", "type": "New", "color": "03T3", "srp": 30555.0, "invoice": 29183.0, "days": 89, "vin": "JTDBCMFE9T3129674", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3113503", "year": 2026, "make": "Toyota", "model": "1692", "modelFull": "COROLLA HYBRID 4DR LE HYBRID CVT", "modelCode": "1692A", "type": "New", "color": "01K3", "srp": 30555.0, "invoice": 29182.0, "days": 153, "vin": "JTDBCMFE1T3113503", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3117198", "year": 2026, "make": "Toyota", "model": "1692", "modelFull": "COROLLA HYBRID 4DR LE HYBRID CVT", "modelCode": "1692A", "type": "New", "color": "01K3", "srp": 30555.0, "invoice": 29182.0, "days": 153, "vin": "JTDBCMFE9T3117198", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3112714", "year": 2026, "make": "Toyota", "model": "1692", "modelFull": "COROLLA HYBRID 4DR LE HYBRID CVT", "modelCode": "1692A", "type": "New", "color": "01L7", "srp": 30555.0, "invoice": 29182.0, "days": 138, "vin": "JTDBCMFE9T3112714", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3132122", "year": 2026, "make": "Toyota", "model": "1693", "modelFull": "COROLLA HYBRID 4DR SE HYBRID CVT", "modelCode": "1693B", "type": "New", "color": "01L7", "srp": 34035.0, "invoice": 32456.0, "days": 48, "vin": "JTDBCMFE7T3132122", "cmpgn": "No campaign", "trade": "Receipt", "isSafety": false, "isReceipt": true}, {"stock": "T3039648", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695C", "type": "New", "color": "0089", "srp": 27730.0, "invoice": 26114.0, "days": 44, "vin": "JTDB4MEE9T3039648", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3040084", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695C", "type": "New", "color": "0089", "srp": 27730.0, "invoice": 26114.0, "days": 34, "vin": "JTDB4MEE5T3040084", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3040642", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695C", "type": "New", "color": "0089", "srp": 27730.0, "invoice": 26114.0, "days": 19, "vin": "JTDB4MEE2T3040642", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3040675", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695C", "type": "New", "color": "0089", "srp": 27730.0, "invoice": 26114.0, "days": 17, "vin": "JTDB4MEE6T3040675", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3040784", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695C", "type": "New", "color": "0089", "srp": 27730.0, "invoice": 26114.0, "days": 19, "vin": "JTDB4MEE0T3040784", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3041690", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695C", "type": "New", "color": "0089", "srp": 27730.0, "invoice": 26114.0, "days": 2, "vin": "JTDB4MEE7T3041690", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3042534", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695C", "type": "New", "color": "0089", "srp": 27730.0, "invoice": 26114.0, "days": 2, "vin": "JTDB4MEE9T3042534", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3040350", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695C", "type": "New", "color": "01F7", "srp": 27730.0, "invoice": 26114.0, "days": 32, "vin": "JTDB4MEE0T3040350", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3041452", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695C", "type": "New", "color": "01L7", "srp": 27730.0, "invoice": 26114.0, "days": 16, "vin": "JTDB4MEE2T3041452", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3041668", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695C", "type": "New", "color": "01L7", "srp": 27730.0, "invoice": 26114.0, "days": 2, "vin": "JTDB4MEE3T3041668", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3041694", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695C", "type": "New", "color": "01L7", "srp": 27730.0, "invoice": 26114.0, "days": 2, "vin": "JTDB4MEE4T3041694", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3043049", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695C", "type": "New", "color": "01L7", "srp": 27730.0, "invoice": 26114.0, "days": 2, "vin": "JTDB4MEE7T3043049", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3038766", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695B", "type": "New", "color": "0040", "srp": 27490.0, "invoice": 25889.0, "days": 46, "vin": "JTDB4MEEXT3038766", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3038921", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695B", "type": "New", "color": "0040", "srp": 27490.0, "invoice": 25889.0, "days": 47, "vin": "JTDB4MEE7T3038921", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3037884", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695B", "type": "New", "color": "01F7", "srp": 27490.0, "invoice": 25889.0, "days": 74, "vin": "JTDB4MEE0T3037884", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3037970", "year": 2026, "make": "Toyota", "model": "1695", "modelFull": "COROLLA LE CVT L4", "modelCode": "1695B", "type": "New", "color": "01F7", "srp": 27490.0, "invoice": 25889.0, "days": 74, "vin": "JTDB4MEE4T3037970", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TU224125", "year": 2026, "make": "Toyota", "model": "2613", "modelFull": "CAMRY XSE HYBRID SEDAN", "modelCode": "2613A", "type": "New", "color": "01L7", "srp": 51010.0, "invoice": 48348.0, "days": 151, "vin": "4T1DAACK6TU224125", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "T3036462", "year": 2026, "make": "Toyota", "model": "4061", "modelFull": "CROWN SIGNIA LIMITED", "modelCode": "4061A", "type": "New", "color": "0090", "srp": 63630.0, "invoice": 59635.0, "days": 87, "vin": "JTDACAAJ2T3036462", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TW015788", "year": 2026, "make": "Toyota", "model": "4366", "modelFull": "RAV4 HYBRID LIMITED AWD SUV", "modelCode": "4366B", "type": "New", "color": "0089", "srp": 56930.0, "invoice": 54890.0, "days": 10, "vin": "2T36CRAV9TW015788", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TW006068", "year": 2026, "make": "Toyota", "model": "4366", "modelFull": "RAV4 HYBRID LIMITED AWD SUV", "modelCode": "4366B", "type": "New", "color": "01L6", "srp": 56930.0, "invoice": 54890.0, "days": 5, "vin": "2T36CRAV7TW006068", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TW002011", "year": 2026, "make": "Toyota", "model": "4368", "modelFull": "RAV4 HYBRID SE FWD SUV", "modelCode": "4368B", "type": "New", "color": "01L6", "srp": 43715.0, "invoice": 42535.0, "days": 4, "vin": "2T36DRBV8TW002011", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TW014272", "year": 2026, "make": "Toyota", "model": "4386", "modelFull": "RAV4 HYBRID WOODLAND EDITION", "modelCode": "4386B", "type": "New", "color": "06X7", "srp": 48340.0, "invoice": 46920.0, "days": 8, "vin": "2T36CRAV2TW014272", "cmpgn": "No campaign", "trade": "Receipt", "isSafety": false, "isReceipt": true}, {"stock": "TS308179", "year": 2026, "make": "Toyota", "model": "5190", "modelFull": "SIENNA CE CE FWD 7 PASSENGER", "modelCode": "5190B", "type": "New", "color": "0040", "srp": 51730.0, "invoice": 49014.0, "days": 19, "vin": "5TDKRKEC5TS308179", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T9077914", "year": 2026, "make": "Toyota", "model": "6354", "modelFull": "GR86 2+2 COUPE 6 SPD M/T", "modelCode": "6354B", "type": "New", "color": "0DCK", "srp": 39630.0, "invoice": 38306.0, "days": 3, "vin": "JF1ZNBE17T9077914", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3255768", "year": 2026, "make": "Toyota", "model": "6372", "modelFull": "COROLLA 5-DOOR HATCHBACK", "modelCode": "6372A", "type": "New", "color": "01F7", "srp": 31790.0, "invoice": 30747.0, "days": 138, "vin": "JTNC4MBE8T3255768", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "S3251939", "year": 2025, "make": "Toyota", "model": "6372", "modelFull": "COROLLA 5-DOOR HATCHBACK", "modelCode": "6372D", "type": "New", "color": "08W7", "srp": 31230.0, "invoice": 30205.0, "days": 215, "vin": "JTNC4MBE2S3251939", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3258017", "year": 2026, "make": "Toyota", "model": "6373", "modelFull": "COROLLA 5-DOOR HATCHBACK", "modelCode": "6373C", "type": "New", "color": "0040", "srp": 32265.0, "invoice": 31201.0, "days": 59, "vin": "JTND4MBE5T3258017", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3258068", "year": 2026, "make": "Toyota", "model": "6373", "modelFull": "COROLLA 5-DOOR HATCHBACK", "modelCode": "6373C", "type": "New", "color": "04Y8", "srp": 32265.0, "invoice": 31202.0, "days": 59, "vin": "JTND4MBE0T3258068", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T3259837", "year": 2026, "make": "Toyota", "model": "6373", "modelFull": "COROLLA 5-DOOR HATCHBACK", "modelCode": "6373C", "type": "New", "color": "08W7", "srp": 32265.0, "invoice": 31201.0, "days": 6, "vin": "JTND4MBE4T3259837", "cmpgn": "No campaign", "trade": "Receipt", "isSafety": false, "isReceipt": true}, {"stock": "TA023633", "year": 2026, "make": "Toyota", "model": "6375", "modelFull": "GR COROLLA CORE 5DR HATCHBACK", "modelCode": "6375A", "type": "New", "color": "0040", "srp": 53895.0, "invoice": 51735.0, "days": 102, "vin": "JTNABAAE8TA023633", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV185156", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380C", "type": "New", "color": "0089", "srp": 30235.0, "invoice": 29388.0, "days": 25, "vin": "7MUAAAAG7TV185156", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV184767", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380C", "type": "New", "color": "0089", "srp": 30235.0, "invoice": 29388.0, "days": 25, "vin": "7MUAAAAG9TV184767", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV190013", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380C", "type": "New", "color": "0089", "srp": 30235.0, "invoice": 29388.0, "days": 4, "vin": "7MUAAAAGXTV190013", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV189429", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380C", "type": "New", "color": "01K3", "srp": 30235.0, "invoice": 29388.0, "days": 4, "vin": "7MUAAAAG3TV189429", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV189736", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380C", "type": "New", "color": "01K3", "srp": 30235.0, "invoice": 29388.0, "days": 4, "vin": "7MUAAAAG1TV189736", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV183169", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380C", "type": "New", "color": "0D10", "srp": 30235.0, "invoice": 29388.0, "days": 32, "vin": "7MUAAAAG6TV183169", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV183486", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380C", "type": "New", "color": "0D10", "srp": 30235.0, "invoice": 29388.0, "days": 32, "vin": "7MUAAAAG7TV183486", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV170038", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380B", "type": "New", "color": "0089", "srp": 30125.0, "invoice": 29281.0, "days": 59, "vin": "7MUAAAAG3TV170038", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV169859", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380B", "type": "New", "color": "0089", "srp": 30125.0, "invoice": 29281.0, "days": 48, "vin": "7MUAAAAG5TV169859", "cmpgn": "No campaign", "trade": "Receipt", "isSafety": false, "isReceipt": true}, {"stock": "TV169940", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380B", "type": "New", "color": "0089", "srp": 30125.0, "invoice": 29281.0, "days": 115, "vin": "7MUAAAAGXTV169940", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV180464", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380B", "type": "New", "color": "0089", "srp": 30125.0, "invoice": 29281.0, "days": 44, "vin": "7MUAAAAG4TV180464", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV170106", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380B", "type": "New", "color": "0D10", "srp": 30125.0, "invoice": 29281.0, "days": 102, "vin": "7MUAAAAG5TV170106", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV170189", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380B", "type": "New", "color": "0D10", "srp": 30125.0, "invoice": 29281.0, "days": 102, "vin": "7MUAAAAG2TV170189", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV166008", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380B", "type": "New", "color": "0D10", "srp": 30125.0, "invoice": 29281.0, "days": 122, "vin": "7MUAAAAG7TV166008", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV167634", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380B", "type": "New", "color": "0D10", "srp": 30125.0, "invoice": 29281.0, "days": 116, "vin": "7MUAAAAG4TV167634", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV168081", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380B", "type": "New", "color": "0D10", "srp": 30125.0, "invoice": 29281.0, "days": 121, "vin": "7MUAAAAG5TV168081", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV177151", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380B", "type": "New", "color": "0D10", "srp": 30125.0, "invoice": 29281.0, "days": 67, "vin": "7MUAAAAG1TV177151", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV156856", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380A", "type": "New", "color": "01K3", "srp": 29790.0, "invoice": 28955.0, "days": 151, "vin": "7MUAAAAG0TV156856", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV157353", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380A", "type": "New", "color": "01K3", "srp": 29790.0, "invoice": 28955.0, "days": 173, "vin": "7MUAAAAG1TV157353", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV155821", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380A", "type": "New", "color": "0D10", "srp": 29790.0, "invoice": 28955.0, "days": 165, "vin": "7MUAAAAG9TV155821", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV158929", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380A", "type": "New", "color": "0D10", "srp": 29790.0, "invoice": 28955.0, "days": 173, "vin": "7MUAAAAG0TV158929", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV157914", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380A", "type": "New", "color": "0D10", "srp": 29790.0, "invoice": 28955.0, "days": 61, "vin": "7MUAAAAG4TV157914", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV160539", "year": 2026, "make": "Toyota", "model": "6380", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6380A", "type": "New", "color": "0D10", "srp": 29790.0, "invoice": 28955.0, "days": 165, "vin": "7MUAAAAG8TV160539", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV190379", "year": 2026, "make": "Toyota", "model": "6381", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6381C", "type": "New", "color": "08W2", "srp": 33570.0, "invoice": 32419.0, "days": 3, "vin": "7MUCAAAG7TV190379", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV190208", "year": 2026, "make": "Toyota", "model": "6381", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6381C", "type": "New", "color": "0D10", "srp": 33570.0, "invoice": 32419.0, "days": 4, "vin": "7MUCAAAG2TV190208", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV168958", "year": 2026, "make": "Toyota", "model": "6381", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6381B", "type": "New", "color": "01K3", "srp": 33460.0, "invoice": 32313.0, "days": 104, "vin": "7MUCAAAG1TV168958", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV169684", "year": 2026, "make": "Toyota", "model": "6381", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6381B", "type": "New", "color": "08W2", "srp": 33460.0, "invoice": 32313.0, "days": 121, "vin": "7MUCAAAG6TV169684", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TV176393", "year": 2026, "make": "Toyota", "model": "6381", "modelFull": "Corolla Cross 5-dr. SUV", "modelCode": "6381B", "type": "New", "color": "0D11", "srp": 33460.0, "invoice": 32313.0, "days": 6, "vin": "7MUCAAAG8TV176393", "cmpgn": "No campaign", "trade": "Receipt", "isSafety": false, "isReceipt": true}, {"stock": "TV094999", "year": 2026, "make": "Toyota", "model": "6390", "modelFull": "COROLLA CROSS SUV HV S", "modelCode": "6390A", "type": "New", "color": "0D10", "srp": 34345.0, "invoice": 33538.0, "days": 171, "vin": "7MUFBABG5TV094999", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "TV096021", "year": 2026, "make": "Toyota", "model": "6391", "modelFull": "COROLLA CROSS SUV HV SE", "modelCode": "6391A", "type": "New", "color": "0D10", "srp": 37325.0, "invoice": 36193.0, "days": 165, "vin": "7MUFBABG8TV096021", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "TS043131", "year": 2026, "make": "Toyota", "model": "7041", "modelFull": "GRAND HIGHLANDER 2WD WAGON XLE", "modelCode": "7041B", "type": "New", "color": "01J9", "srp": 53165.0, "invoice": 51128.0, "days": 19, "vin": "5TDAAAA54TS043131", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TS095268", "year": 2026, "make": "Toyota", "model": "7053", "modelFull": "GRAND HIGHLANDER HV NIGHTSHADE", "modelCode": "7053B", "type": "New", "color": "0218", "srp": 68195.0, "invoice": 65830.0, "days": 12, "vin": "5TDACAB54TS095268", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT046225", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302B", "type": "New", "color": "01J9", "srp": 37540.0, "invoice": 36403.0, "days": 25, "vin": "3TYKD5HNXTT046225", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT046585", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302B", "type": "New", "color": "01L7", "srp": 37540.0, "invoice": 36403.0, "days": 25, "vin": "3TYKD5HN7TT046585", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT046986", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302B", "type": "New", "color": "01L7", "srp": 37540.0, "invoice": 36403.0, "days": 26, "vin": "3TYKD5HN3TT046986", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT042908", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302A", "type": "New", "color": "0040", "srp": 37450.0, "invoice": 36315.0, "days": 46, "vin": "3TYKD5HN7TT042908", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT043774", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302A", "type": "New", "color": "0040", "srp": 37450.0, "invoice": 36315.0, "days": 50, "vin": "3TYKD5HN6TT043774", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT044713", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302A", "type": "New", "color": "0040", "srp": 37450.0, "invoice": 36315.0, "days": 46, "vin": "3TYKD5HN2TT044713", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT041745", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302A", "type": "New", "color": "01J9", "srp": 37450.0, "invoice": 36315.0, "days": 52, "vin": "3TYKD5HN0TT041745", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT041889", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302A", "type": "New", "color": "01J9", "srp": 37450.0, "invoice": 36315.0, "days": 52, "vin": "3TYKD5HN2TT041889", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT040446", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302A", "type": "New", "color": "01L7", "srp": 37450.0, "invoice": 36315.0, "days": 46, "vin": "3TYKD5HN7TT040446", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT041422", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302A", "type": "New", "color": "01L7", "srp": 37450.0, "invoice": 36315.0, "days": 52, "vin": "3TYKD5HN9TT041422", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT041655", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302A", "type": "New", "color": "01L7", "srp": 37450.0, "invoice": 36315.0, "days": 50, "vin": "3TYKD5HNXTT041655", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT042801", "year": 2026, "make": "Toyota", "model": "7302", "modelFull": "TACOMA SR 4X2 DOUBLE CAB", "modelCode": "7302A", "type": "New", "color": "01L7", "srp": 37450.0, "invoice": 36315.0, "days": 47, "vin": "3TYKD5HN0TT042801", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT025841", "year": 2026, "make": "Toyota", "model": "7303", "modelFull": "TACOMA SR 4X4 DOUBLE CAB", "modelCode": "7303B", "type": "New", "color": "0040", "srp": 41100.0, "invoice": 39972.0, "days": 26, "vin": "3TYLD5KN8TT025841", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT023590", "year": 2026, "make": "Toyota", "model": "7303", "modelFull": "TACOMA SR 4X4 DOUBLE CAB", "modelCode": "7303A", "type": "New", "color": "0040", "srp": 41010.0, "invoice": 39884.0, "days": 52, "vin": "3TYLD5KNXTT023590", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT023927", "year": 2026, "make": "Toyota", "model": "7303", "modelFull": "TACOMA SR 4X4 DOUBLE CAB", "modelCode": "7303A", "type": "New", "color": "0040", "srp": 41010.0, "invoice": 39884.0, "days": 52, "vin": "3TYLD5KN8TT023927", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT036751", "year": 2026, "make": "Toyota", "model": "7304", "modelFull": "TACOMA SPORT 4X2 D CAB SR5", "modelCode": "7304B", "type": "New", "color": "01L7", "srp": 46785.0, "invoice": 44816.0, "days": 26, "vin": "3TYKB5FN2TT036751", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT032671", "year": 2026, "make": "Toyota", "model": "7304", "modelFull": "TACOMA SPORT 4X2 D CAB SR5", "modelCode": "7304A", "type": "New", "color": "0089", "srp": 46685.0, "invoice": 44717.0, "days": 31, "vin": "3TYKB5FN6TT032671", "cmpgn": "No campaign", "trade": "Receipt", "isSafety": false, "isReceipt": true}, {"stock": "TT030954", "year": 2026, "make": "Toyota", "model": "7304", "modelFull": "TACOMA SPORT 4X2 D CAB SR5", "modelCode": "7304A", "type": "New", "color": "01L7", "srp": 46685.0, "invoice": 44717.0, "days": 26, "vin": "3TYKB5FN8TT030954", "cmpgn": "No campaign", "trade": "Receipt", "isSafety": false, "isReceipt": true}, {"stock": "TT033234", "year": 2026, "make": "Toyota", "model": "7304", "modelFull": "TACOMA SPORT 4X2 D CAB SR5", "modelCode": "7304A", "type": "New", "color": "04Z2", "srp": 46685.0, "invoice": 44717.0, "days": 52, "vin": "3TYKB5FN0TT033234", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT036331", "year": 2026, "make": "Toyota", "model": "7309", "modelFull": "TACOMA SR5 4X2 DBL CAB", "modelCode": "7309B", "type": "New", "color": "08X0", "srp": 42510.0, "invoice": 41079.0, "days": 26, "vin": "3TYKB5FN2TT036331", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT036592", "year": 2026, "make": "Toyota", "model": "7309", "modelFull": "TACOMA SR5 4X2 DBL CAB", "modelCode": "7309B", "type": "New", "color": "08X0", "srp": 42510.0, "invoice": 41079.0, "days": 26, "vin": "3TYKB5FN8TT036592", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT035070", "year": 2026, "make": "Toyota", "model": "7309", "modelFull": "TACOMA SR5 4X2 DBL CAB", "modelCode": "7309A", "type": "New", "color": "08X0", "srp": 42145.0, "invoice": 40725.0, "days": 50, "vin": "3TYKB5FN6TT035070", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT035698", "year": 2026, "make": "Toyota", "model": "7309", "modelFull": "TACOMA SR5 4X2 DBL CAB", "modelCode": "7309A", "type": "New", "color": "08X0", "srp": 42145.0, "invoice": 40725.0, "days": 25, "vin": "3TYKB5FN8TT035698", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT034759", "year": 2026, "make": "Toyota", "model": "7309", "modelFull": "TACOMA SR5 4X2 DBL CAB", "modelCode": "7309A", "type": "New", "color": "08X0", "srp": 42145.0, "invoice": 40725.0, "days": 47, "vin": "3TYKB5FN8TT034759", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TT035122", "year": 2026, "make": "Toyota", "model": "7309", "modelFull": "TACOMA SR5 4X2 DBL CAB", "modelCode": "7309A", "type": "New", "color": "08X0", "srp": 42145.0, "invoice": 40725.0, "days": 46, "vin": "3TYKB5FNXTT035122", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "ST082604", "year": 2025, "make": "Toyota", "model": "7328", "modelFull": "TACOMA 4X4 DOUBLE CAB", "modelCode": "7328C", "type": "New", "color": "01J9", "srp": 48785.0, "invoice": 46782.0, "days": 216, "vin": "3TYLB5JN7ST082604", "cmpgn": "No campaign", "trade": "Receipt", "isSafety": false, "isReceipt": true}, {"stock": "ST020997", "year": 2025, "make": "Toyota", "model": "7333", "modelFull": "TACOMA HV 4WD DCAB TRD Sport", "modelCode": "7333B", "type": "New", "color": "01L7", "srp": 62020.0, "invoice": 58633.0, "days": 334, "vin": "3TYLC5LN3ST020997", "cmpgn": "Safety Campaign", "trade": "", "isSafety": true, "isReceipt": false}, {"stock": "TX369691", "year": 2026, "make": "Toyota", "model": "8481", "modelFull": "TUNDRA 4X4 4WD CREWMAX SR", "modelCode": "8481A", "type": "New", "color": "0040", "srp": 49760.0, "invoice": 47971.0, "days": 102, "vin": "5TFKB5DB0TX369691", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX376558", "year": 2026, "make": "Toyota", "model": "8481", "modelFull": "TUNDRA 4X4 4WD CREWMAX SR", "modelCode": "8481A", "type": "New", "color": "0040", "srp": 49760.0, "invoice": 47971.0, "days": 80, "vin": "5TFKB5DB0TX376558", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX349752", "year": 2026, "make": "Toyota", "model": "8481", "modelFull": "TUNDRA 4X4 4WD CREWMAX SR", "modelCode": "8481A", "type": "New", "color": "01G3", "srp": 49760.0, "invoice": 47971.0, "days": 59, "vin": "5TFKB5DB4TX349752", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX352426", "year": 2026, "make": "Toyota", "model": "8481", "modelFull": "TUNDRA 4X4 4WD CREWMAX SR", "modelCode": "8481A", "type": "New", "color": "01G3", "srp": 49760.0, "invoice": 47971.0, "days": 124, "vin": "5TFKB5DB6TX352426", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX354180", "year": 2026, "make": "Toyota", "model": "8481", "modelFull": "TUNDRA 4X4 4WD CREWMAX SR", "modelCode": "8481A", "type": "New", "color": "01G3", "srp": 49760.0, "invoice": 47971.0, "days": 55, "vin": "5TFKB5DBXTX354180", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX376587", "year": 2026, "make": "Toyota", "model": "8481", "modelFull": "TUNDRA 4X4 4WD CREWMAX SR", "modelCode": "8481A", "type": "New", "color": "01G3", "srp": 49760.0, "invoice": 47971.0, "days": 87, "vin": "5TFKB5DB7TX376587", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX381305", "year": 2026, "make": "Toyota", "model": "8481", "modelFull": "TUNDRA 4X4 4WD CREWMAX SR", "modelCode": "8481A", "type": "New", "color": "01G3", "srp": 49760.0, "invoice": 47971.0, "days": 61, "vin": "5TFKB5DB7TX381305", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX349638", "year": 2026, "make": "Toyota", "model": "8481", "modelFull": "TUNDRA 4X4 4WD CREWMAX SR", "modelCode": "8481A", "type": "New", "color": "01J9", "srp": 49760.0, "invoice": 47971.0, "days": 52, "vin": "5TFKB5DB6TX349638", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX399034", "year": 2026, "make": "Toyota", "model": "8481", "modelFull": "TUNDRA 4X4 4WD CREWMAX SR", "modelCode": "8481A", "type": "New", "color": "0218", "srp": 49760.0, "invoice": 47971.0, "days": 3, "vin": "5TFKB5DB4TX399034", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX400326", "year": 2026, "make": "Toyota", "model": "8481", "modelFull": "TUNDRA 4X4 4WD CREWMAX SR", "modelCode": "8481A", "type": "New", "color": "0218", "srp": 49760.0, "invoice": 47971.0, "days": 4, "vin": "5TFKB5DB2TX400326", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX395926", "year": 2026, "make": "Toyota", "model": "8481", "modelFull": "TUNDRA 4X4 4WD CREWMAX SR", "modelCode": "8481A", "type": "New", "color": "03U5", "srp": 49760.0, "invoice": 47971.0, "days": 13, "vin": "5TFKB5DBXTX395926", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX398514", "year": 2026, "make": "Toyota", "model": "8481", "modelFull": "TUNDRA 4X4 4WD CREWMAX SR", "modelCode": "8481A", "type": "New", "color": "03U5", "srp": 49760.0, "invoice": 47971.0, "days": 3, "vin": "5TFKB5DB2TX398514", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX337287", "year": 2026, "make": "Toyota", "model": "8482", "modelFull": "TUNDRA 4X4 4WD TRD SPORT", "modelCode": "8482A", "type": "New", "color": "0040", "srp": 68385.0, "invoice": 64184.0, "days": 187, "vin": "5TFLA5DBXTX337287", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "RX207601", "year": 2024, "make": "Toyota", "model": "8482", "modelFull": "TUNDRA 4X4 4WD TRD SPORT", "modelCode": "8482D", "type": "New", "color": "08X8", "srp": 66870.0, "invoice": 51192.44, "days": 137, "vin": "5TFLA5DB8RX207601", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX120133", "year": 2026, "make": "Toyota", "model": "8484", "modelFull": "TUNDRA HYBRID 4X4 TRD PRO", "modelCode": "8484A", "type": "New", "color": "0040", "srp": 84025.0, "invoice": 78764.0, "days": 145, "vin": "5TFPC5DB0TX120133", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX121105", "year": 2026, "make": "Toyota", "model": "8484", "modelFull": "TUNDRA HYBRID 4X4 TRD PRO", "modelCode": "8484A", "type": "New", "color": "0040", "srp": 84025.0, "invoice": 78764.0, "days": 138, "vin": "5TFPC5DB0TX121105", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX122430", "year": 2026, "make": "Toyota", "model": "8484", "modelFull": "TUNDRA HYBRID 4X4 TRD PRO", "modelCode": "8484A", "type": "New", "color": "0040", "srp": 84025.0, "invoice": 78764.0, "days": 138, "vin": "5TFPC5DB5TX122430", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX116862", "year": 2026, "make": "Toyota", "model": "8484", "modelFull": "TUNDRA HYBRID 4X4 TRD PRO", "modelCode": "8484A", "type": "New", "color": "0040", "srp": 84025.0, "invoice": 78764.0, "days": 199, "vin": "5TFPC5DB4TX116862", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "TX116845", "year": 2026, "make": "Toyota", "model": "8484", "modelFull": "TUNDRA HYBRID 4X4 TRD PRO", "modelCode": "8484A", "type": "New", "color": "01G3", "srp": 84025.0, "invoice": 78764.0, "days": 24, "vin": "5TFPC5DB4TX116845", "cmpgn": "No campaign", "trade": "Receipt", "isSafety": false, "isReceipt": true}, {"stock": "SX094540", "year": 2025, "make": "Toyota", "model": "8484", "modelFull": "TUNDRA HYBRID 4X4 TRD PRO", "modelCode": "8484A", "type": "New", "color": "0040", "srp": 81450.0, "invoice": 76355.0, "days": 397, "vin": "5TFPC5DB4SX094540", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "SX097602", "year": 2025, "make": "Toyota", "model": "8484", "modelFull": "TUNDRA HYBRID 4X4 TRD PRO", "modelCode": "8484A", "type": "New", "color": "0040", "srp": 81450.0, "invoice": 76355.0, "days": 375, "vin": "5TFPC5DB4SX097602", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "SX101181", "year": 2025, "make": "Toyota", "model": "8484", "modelFull": "TUNDRA HYBRID 4X4 TRD PRO", "modelCode": "8484A", "type": "New", "color": "01G3", "srp": 81450.0, "invoice": 76355.0, "days": 348, "vin": "5TFPC5DB6SX101181", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T5030469", "year": 2026, "make": "Toyota", "model": "8781", "modelFull": "4RUNNER HV 4WD S-GR HYBRID", "modelCode": "8781A", "type": "New", "color": "01L7", "srp": 85290.0, "invoice": 80419.0, "days": 72, "vin": "JTEVB5BR8T5030469", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "S5024240", "year": 2025, "make": "Toyota", "model": "8784", "modelFull": "4RUNNER HV 4WD S-GR HYBRID", "modelCode": "8784E", "type": "New", "color": "08X0", "srp": 78935.0, "invoice": 74430.0, "days": 109, "vin": "JTEVB5BR3S5024240", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "S5018719", "year": 2025, "make": "Toyota", "model": "8784", "modelFull": "4RUNNER HV 4WD S-GR HYBRID", "modelCode": "8784D", "type": "New", "color": "01L0", "srp": 78935.0, "invoice": 74430.0, "days": 171, "vin": "JTEVB5BR2S5018719", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "S5006864", "year": 2025, "make": "Toyota", "model": "8789", "modelFull": "4RUNNER 2WD LTD", "modelCode": "8789C", "type": "New", "color": "01L7", "srp": 71755.0, "invoice": 67591.0, "days": 208, "vin": "JTEVA5AR0S5006864", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T5011612", "year": 2026, "make": "Toyota", "model": "8792", "modelFull": "4RUNNER 2WD STANDARD", "modelCode": "8792B", "type": "New", "color": "0040", "srp": 50535.0, "invoice": 47585.0, "days": 3, "vin": "JTEVA5AR7T5011612", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T5010800", "year": 2026, "make": "Toyota", "model": "8792", "modelFull": "4RUNNER 2WD STANDARD", "modelCode": "8792B", "type": "New", "color": "0202", "srp": 50535.0, "invoice": 47585.0, "days": 9, "vin": "JTEVA5AR3T5010800", "cmpgn": "No campaign", "trade": "Receipt", "isSafety": false, "isReceipt": true}, {"stock": "T5010477", "year": 2026, "make": "Toyota", "model": "8792", "modelFull": "4RUNNER 2WD STANDARD", "modelCode": "8792A", "type": "New", "color": "01L0", "srp": 50160.0, "invoice": 47228.0, "days": 16, "vin": "JTEVA5AR0T5010477", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T5105218", "year": 2026, "make": "Toyota", "model": "8795", "modelFull": "4RUNNER 4WD TRAIL", "modelCode": "8795B", "type": "New", "color": "01L0", "srp": 64535.0, "invoice": 60464.0, "days": 3, "vin": "JTEVA5BR4T5105218", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T5085775", "year": 2026, "make": "Toyota", "model": "8795", "modelFull": "4RUNNER 4WD TRAIL", "modelCode": "8795A", "type": "New", "color": "01L0", "srp": 64115.0, "invoice": 60066.0, "days": 74, "vin": "JTEVA5BR0T5085775", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}, {"stock": "T5098736", "year": 2026, "make": "Toyota", "model": "8795", "modelFull": "4RUNNER 4WD TRAIL", "modelCode": "8795A", "type": "New", "color": "08X0", "srp": 64115.0, "invoice": 60066.0, "days": 32, "vin": "JTEVA5BR0T5098736", "cmpgn": "No campaign", "trade": "", "isSafety": false, "isReceipt": false}];
+
+
+var LAST_UPDATED="April 10, 2026";
+
+var SORT={ov:{col:'days',dir:'desc'},n:{col:'days',dir:'desc'},u:{col:'days',dir:'desc'},ag:{col:'days',dir:'desc'}};
+var F={ovAge:'0-9999',nAge:'all',agMin:'90',smSort:'days',smExclude:'safety'};
+var CI={};
+
+/* ══════════════════ DATE ══════════════════ */
+(function(){
+  var el=document.getElementById('navDate');
+  try{
+    var d=new Date();
+    var opts={weekday:'short',month:'short',day:'numeric',year:'numeric'};
+    el.textContent=d.toLocaleDateString('en-US',opts);
+  }catch(e){
+    el.textContent=new Date().toString().slice(0,15);
+  }
+})();
+
+// Auto-load preloaded data on startup
+(function(){
+  D=PRELOADED_DATA.slice();
+  refreshAll();
+  document.getElementById('lastImportBadge').textContent='Data: '+LAST_UPDATED;
+  document.getElementById('lastImportBadge').style.display='inline-block';
+  document.getElementById('syncBadge').style.display='flex';
+  document.getElementById('footerText').textContent=D.length+' units loaded · Data as of '+LAST_UPDATED;
+})();
+
+/* ══════════════════ MODAL ══════════════════ */
+function openModal(){document.getElementById('modal').classList.add('open');}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+/* ══════════════════ FILE HANDLING ══════════════════ */
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('drag-over');
+  var file=e.dataTransfer.files[0];
+  if(file) readFile(file);
+}
+function handleFileSelect(file){
+  if(file) readFile(file);
+}
+function readFile(file){
+  var name=file.name;
+  var ext=name.split('.').pop().toLowerCase();
+  document.getElementById('fileLabel').textContent='&#10003; '+name;
+  document.getElementById('fileLabel').style.display='block';
+  if(ext==='xlsx'||ext==='xls'){
+    var reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        var bytes=new Uint8Array(e.target.result);
+        var csv=xlsxToCSV(bytes);
+        document.getElementById('csvInput').value=csv;
+        validateCSV();
+      }catch(err){
+        document.getElementById('fileLabel').textContent='Error: '+err.message;
+        document.getElementById('fileLabel').style.color='#f87171';
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    var reader=new FileReader();
+    reader.onload=function(e){
+      document.getElementById('csvInput').value=e.target.result;
+      validateCSV();
+    };
+    reader.readAsText(file);
+  }
+}
+
+/* ══════════════════ MINIMAL XLSX READER ══════════════════ */
+/* Reads shared strings + sheet data from xlsx without any library */
+function xlsxToCSV(uint8){
+  // xlsx is a zip file — find files by signature
+  var str=String.fromCharCode.apply(null,uint8);
+  // Fall back: tell user to save as CSV
+  throw new Error('Please save your Excel file as CSV first (File > Save As > CSV), then upload the CSV.');
+}
+
+/* ══════════════════ SAMPLE DATA ══════════════════ */
+var SAMPLE="Model Name,Serial No.,Model,Ext.,Yr.,VIN,DIS,Invoice,Total SRP,Cmpgn.,Trade Status\nPRIUS SEDAN,T3065592,1170A,01L0,2026,JTDACAAU3T3065592,171,33140.00,35190.00,Safety Campaign,\nPRIUS PRIME SEDAN,T3065994,1175B,0089,2026,JTDACACU5T3065994,105,34093.58,36430.00,Safety Campaign,\nCOROLLA SE CVT L4,T3527044,1684B,01K3,2026,JTDP4MCE6T3527044,45,30004.00,31670.00,No campaign,\nCOROLLA LE CVT L4,T3039648,1695C,0089,2026,JTDB4MEE9T3039648,28,26114.00,27730.00,No campaign,Receipt\nTACOMA SR 4X2,TT041655,7302A,01L7,2026,3TYKD5HNXTT041655,112,36315.00,37450.00,No campaign,\nTACOMA SR 4X4,TT023590,7303A,0040,2026,3TYLD5KNXTT023590,36,39884.00,41010.00,No campaign,\nCAMRY XSE HYBRID,TU224125,2613A,01L7,2026,4T1DAACK6TU224125,135,48348.00,51010.00,Safety Campaign,\nTUNDRA 4X4 SR,TX349752,8481A,01G3,2026,5TFKB5DB4TX349752,108,47971.00,49760.00,No campaign,\nTUNDRA HV TRD PRO,TX120133,8484A,0040,2026,5TFPC5DB0TX120133,183,78764.00,84025.00,Safety Campaign,\n4RUNNER HV 4WD,T5030469,8781A,01L7,2026,JTEVB5BR8T5030469,92,80419.00,85290.00,No campaign,Receipt\nCOROLLA HYBRID LE,T3130264,1692B,01F7,2026,JTDBCMFE6T3130264,73,29183.00,30555.00,No campaign,\nGR86 COUPE,T9077430,6354B,0DCK,2026,JF1ZNBE17T9077430,16,38306.00,39630.00,No campaign,\nSIENNA CE FWD,,5190B,0040,2026,5TDKRKEC5TS308179,3,49014.00,51730.00,No campaign,\nCROWN SIGNIA LTD,T3036462,4061A,0090,2026,JTDACAAJ2T3036462,71,59635.00,63630.00,No campaign,\nTACOMA HV TRD,ST020997,7333B,01L7,2025,3TYLC5LN3ST020997,318,58633.00,62020.00,Safety Campaign,";
+function loadSample(){document.getElementById('csvInput').value=SAMPLE;validateCSV();}
+
+/* ══════════════════ CSV PARSE ══════════════════ */
+function parseCSV(raw){
+  var lines=raw.trim().split('\n').filter(function(l){return l.trim();});
+  if(lines.length<2) return null;
+  var sep=lines[0].indexOf('\t')>=0?'\t':',';
+  var rawH=lines[0].split(sep).map(function(h){return h.trim().replace(/^"|"$/g,'');});
+  var normH=rawH.map(function(h){return h.toLowerCase().replace(/[^a-z0-9]/g,'');});
+  var aliases={
+    stock:    ['serialno','stockno','stock','serialnumber'],
+    year:     ['yr','year'],
+    modelname:['modelname'],
+    model:    ['model'],
+    type:     ['type'],
+    days:     ['dis','daysonlot','days'],
+    color:    ['ext','color','exterior'],
+    srp:      ['totalsrp','srp','price','totalprice'],
+    invoice:  ['invoice'],
+    vin:      ['vin'],
+    cmpgn:    ['cmpgn','campaign','cmpgn'],
+    trade:    ['tradestatus','trade','tradestatuscolumn']
+  };
+  function idx(keys){for(var i=0;i<keys.length;i++){var x=normH.indexOf(keys[i]);if(x>=0)return x;}return -1;}
+  var im={};
+  Object.keys(aliases).forEach(function(k){im[k]=idx(aliases[k]);});
+  var req=['stock','year','model','days','color','srp','vin'];
+  var miss=req.filter(function(k){return im[k]<0;});
+  if(miss.length) return{error:'Missing columns: '+miss.join(', ')};
+  function splitCSVLine(line,sep){
+    if(sep==='\t') return line.split('\t').map(function(v){return v.trim();});
+    var res=[],cur='',inQ=false;
+    for(var ci=0;ci<line.length;ci++){
+      var ch=line[ci];
+      if(ch==='"'){inQ=!inQ;}
+      else if(ch===sep&&!inQ){res.push(cur);cur='';}
+      else{cur+=ch;}
+    }
+    res.push(cur);
+    return res;
+  }
+    function g(vals,k){var i=im[k];return i>=0&&vals[i]!==undefined?vals[i].replace(/^"|"$/g,'').trim():'';}
+  var rows=[],errs=[];
+  for(var i=1;i<lines.length;i++){
+    var vals=splitCSVLine(lines[i],sep);
+    var days=parseInt(g(vals,'days'));
+    var year=parseInt(g(vals,'year'));
+    var srp=parseFloat(g(vals,'srp').replace(/[^0-9.]/g,''));
+    var inv=parseFloat(g(vals,'invoice').replace(/[^0-9.]/g,''))||0;
+    if(isNaN(days)||isNaN(year)){errs.push('Row '+(i+1)+' skipped');continue;}
+    var modelCode=g(vals,'model');
+    var model4=modelCode.substring(0,4);
+    var modelFull=g(vals,'modelname')||modelCode;
+    var stockVal=g(vals,'stock')||g(vals,'vin').slice(-6)||('R'+i);
+    var typeVal=g(vals,'type')||'New';
+    var cmpgn=g(vals,'cmpgn');
+    var trade=g(vals,'trade');
+    rows.push({
+      stock:stockVal,year:year,make:'Hyundai',
+      model:model4,modelFull:modelFull,modelCode:modelCode,
+      type:typeVal,color:g(vals,'color')||'—',
+      srp:isNaN(srp)?0:srp,invoice:inv,
+      days:days,vin:g(vals,'vin'),
+      cmpgn:cmpgn,trade:trade,
+      isSafety:cmpgn.toLowerCase().indexOf('safety')>=0,
+      isReceipt:trade.toLowerCase().indexOf('receipt')>=0
+    });
+  }
+  return{rows:rows,errs:errs};
+}
+
+function validateCSV(){
+  var raw=document.getElementById('csvInput').value;
+  var res=document.getElementById('parseResult');
+  var pw=document.getElementById('previewWrap');
+  var btn=document.getElementById('importBtn');
+  res.style.display='none';pw.style.display='none';btn.disabled=true;PB=[];
+  if(!raw.trim()) return;
+  var result=parseCSV(raw);
+  if(!result) return;
+  if(result.error){res.className='parse-result pr-err';res.textContent='Error: '+result.error;res.style.display='block';return;}
+  PB=result.rows;
+  var w=result.errs.length?' · '+result.errs.length+' rows skipped':'';
+  res.className=result.errs.length?'parse-result pr-warn':'parse-result pr-ok';
+  res.textContent=(result.errs.length?'':'\u2713 ')+PB.length+' vehicles parsed'+w;
+  res.style.display='block';
+  // Preview table
+  var tbl=document.getElementById('previewTbl');tbl.innerHTML='';
+  var thead=tbl.createTHead();var hr=thead.insertRow();
+  ['Serial No.','Yr.','Model','Model Name','Ext.','SRP','Days','Campaign','Trade'].forEach(function(h){var th=document.createElement('th');th.textContent=h;hr.appendChild(th);});
+  var tbody=tbl.createTBody();
+  PB.slice(0,6).forEach(function(v){
+    var tr=tbody.insertRow();
+    [v.stock,v.year,v.model,v.modelFull,v.color,v.srp?'$'+v.srp.toLocaleString():'—',v.days+'d',v.cmpgn,v.trade].forEach(function(val){var td=tr.insertCell();td.textContent=val||'—';});
+  });
+  if(PB.length>6){var tr=tbody.insertRow();var td=tr.insertCell();td.colSpan=9;td.textContent='... and '+(PB.length-6)+' more';td.style.cssText='color:var(--muted);text-align:center;padding:7px;font-style:italic';}
+  pw.style.display='block';
+  btn.disabled=(PB.length===0);
+}
+
+function commitImport(){
+  D=PB.slice();
+  refreshAll();
+  closeModal();
+  var now=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('lastImportBadge').textContent='Imported: '+now;
+  document.getElementById('lastImportBadge').style.display='inline-block';
+  document.getElementById('syncBadge').style.display='flex';
+  document.getElementById('footerText').textContent=D.length+' units loaded \xb7 Updated '+now;
+}
+
+/* ══════════════════ TABS ══════════════════ */
+function switchTab(name,el){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.tab-view').forEach(function(v){v.classList.remove('active');});
+  el.classList.add('active');
+  document.getElementById('view-'+name).classList.add('active');
+  if(D.length) renderTab(name);
+}
+function renderTab(name){
+  if(name==='overview'){updateOvCharts();renderOvTable();}
+  else if(name==='new'){updateNCharts();renderNTable();}
+  else if(name==='aging'){updateAgCharts();renderAgTable();}
+  else if(name==='sellmodel'){renderSellModel();}
+  else if(name==='miturno'){
+    // Try to load saved name
+    if(!MT_NAME){try{var saved=localStorage.getItem('mvp_salesperson_name');if(saved){MT_NAME=saved;document.getElementById('mtNameInput').value=saved;}}catch(e){}}
+    if(MT_NAME&&D.length) renderMiTurno();
+    else if(MT_NAME) renderMiTurno();
+  }
+  else if(name==='clientsearch'){runClientSearch();}
+}
+
+/* ══════════════════ FILTERS ══════════════════ */
+function setF(key,val,btn){
+  F[key]=val;
+  btn.closest('.filters').querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  if(key==='ovAge') renderOvTable();
+  else if(key==='nAge') renderNTable();
+  else if(key==='agMin') renderAgTable();
+  else if(key==='smExclude'||key==='smSort'||key==='smMin'){renderSellModel();}
+}
+
+/* ══════════════════ HELPERS ══════════════════ */
+function isNew(v){return v.type.toLowerCase()==='new';}
+function avgD(arr){return arr.length?Math.round(arr.reduce(function(s,v){return s+v.days;},0)/arr.length):0;}
+function ageCls(d){return d>=90?'age-crit':d>=60?'age-warn':'age-ok';}
+function ageIcon(d){return d>=90?'\uD83D\uDD34':d>=60?'\uD83D\uDFE1':'\uD83D\uDFE2';}
+function ageColor(d){return d>=90?'#f97316':d>=60?'#eab308':'#22c55e';}
+function rowCls(v){return '';}
+function statusBadge(v){
+  if(v.isSafety) return '<span class="status-badge sb-safety">Safety</span>';
+  if(v.isReceipt) return '<span class="status-badge sb-receipt">Trade Recibido</span>';
+  return '';
+}
+function actBtn(d){
+  if(d>=90) return '<button class="act-red">⚡ Priority Unit</button>';
+  if(d>=60) return '<button class="act-amber">Review</button>';
+  return '<button class="act-blue">Monitor</button>';
+}
+function barHTML(d,mx){
+  var pct=Math.min(Math.round(d/(mx||120)*100),100);
+  return '<div style="width:70px;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden"><div style="width:'+pct+'%;height:100%;background:'+ageColor(d)+';border-radius:3px"></div></div>';
+}
+function fmtPrice(p){return p?'$'+p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';}
+var COLORS=['#EB0A1E','#a78bfa','#2dd4bf','#f59e0b','#22c55e','#ef4444','#fb923c','#e879f9','#38bdf8','#f472b6'];
+
+/* ══════════════════ CANVAS CHARTS ══════════════════ */
+function destroyChart(id){if(CI[id]){CI[id]=null;}}
+function getCtx(id){
+  var canvas=document.getElementById(id);
+  var wrap=canvas.parentElement;
+  canvas.width=wrap.offsetWidth||600;
+  canvas.height=wrap.offsetHeight||220;
+  return canvas.getContext('2d');
+}
+
+function drawBarChart(id,labels,datasets,opts){
+  opts=opts||{};
+  var canvas=document.getElementById(id);
+  var wrap=canvas.parentElement;
+  canvas.width=wrap.offsetWidth||600;
+  canvas.height=wrap.offsetHeight||220;
+  var ctx=canvas.getContext('2d');
+  var W=canvas.width,H=canvas.height;
+  var pad={top:16,right:16,bottom:40,left:opts.horizontal?70:36};
+  var cw=W-pad.left-pad.right, ch=H-pad.top-pad.bottom;
+  ctx.clearRect(0,0,W,H);
+  var allVals=[];
+  datasets.forEach(function(ds){ds.data.forEach(function(v){allVals.push(v);});});
+  var maxV=Math.max.apply(null,allVals.concat([1]));
+  var n=labels.length;
+  var ds0=datasets[0],ds1=datasets[1];
+  var barW=opts.horizontal?(ch/n*0.6):(cw/n/(datasets.length)*0.8);
+  var groupW=opts.horizontal?(ch/n):(cw/n);
+  // Grid lines
+  ctx.strokeStyle='rgba(255,255,255,.05)';
+  ctx.lineWidth=1;
+  for(var gi=0;gi<=4;gi++){
+    var gv=maxV*gi/4;
+    if(opts.horizontal){
+      var gx=pad.left+cw*gi/4;
+      ctx.beginPath();ctx.moveTo(gx,pad.top);ctx.lineTo(gx,pad.top+ch);ctx.stroke();
+      ctx.fillStyle='#7b82a0';ctx.font='10px system-ui';ctx.textAlign='center';
+      ctx.fillText(Math.round(gv),gx,pad.top+ch+14);
+    } else {
+      var gy=pad.top+ch-ch*gi/4;
+      ctx.beginPath();ctx.moveTo(pad.left,gy);ctx.lineTo(pad.left+cw,gy);ctx.stroke();
+      ctx.fillStyle='#7b82a0';ctx.font='10px system-ui';ctx.textAlign='right';
+      ctx.fillText(Math.round(gv),pad.left-5,gy+3);
+    }
+  }
+  // Bars
+  datasets.forEach(function(ds,di){
+    ds.data.forEach(function(val,i){
+      ctx.fillStyle=Array.isArray(ds.color)?ds.color[i]:ds.color;
+      ctx.globalAlpha=0.9;
+      if(opts.horizontal){
+        var y=pad.top+i*groupW+(di*(barW+2));
+        var bw=cw*val/maxV;
+        roundRect(ctx,pad.left,y,bw,barW,3);
+        ctx.fill();
+      } else {
+        var x=pad.left+i*groupW+(di*(barW+1));
+        var bh=ch*val/maxV;
+        roundRect(ctx,x,pad.top+ch-bh,barW,bh,3);
+        ctx.fill();
+      }
+      ctx.globalAlpha=1;
+    });
+  });
+  // Labels
+  ctx.fillStyle='#7b82a0';ctx.font='10px system-ui';
+  labels.forEach(function(lbl,i){
+    if(opts.horizontal){
+      ctx.textAlign='right';
+      ctx.fillText(lbl.length>8?lbl.slice(0,8):lbl,pad.left-5,pad.top+i*groupW+barW/2*(datasets.length)+4);
+    } else {
+      ctx.textAlign='center';
+      ctx.fillText(lbl,pad.left+i*groupW+groupW/2,pad.top+ch+14);
+    }
+  });
+}
+
+function drawDonutChart(id,labels,values,colors){
+  var canvas=document.getElementById(id);
+  var wrap=canvas.parentElement;
+  canvas.width=wrap.offsetWidth||300;
+  canvas.height=wrap.offsetHeight||220;
+  var ctx=canvas.getContext('2d');
+  var W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  var cx=W/2,cy=H/2,R=Math.min(W,H)*0.38,r=R*0.55;
+  var total=values.reduce(function(s,v){return s+v;},0)||1;
+  var start=-Math.PI/2;
+  values.forEach(function(v,i){
+    var angle=2*Math.PI*v/total;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,R,start,start+angle);
+    ctx.closePath();
+    ctx.fillStyle=colors[i%colors.length];
+    ctx.globalAlpha=0.9;
+    ctx.fill();
+    ctx.globalAlpha=1;
+    start+=angle;
+  });
+  // Donut hole
+  ctx.beginPath();ctx.arc(cx,cy,r,0,2*Math.PI);
+  ctx.fillStyle='#181c27';ctx.fill();
+  // Center text
+  ctx.fillStyle='#e8eaf0';ctx.font='500 14px system-ui';ctx.textAlign='center';
+  ctx.fillText(values.length+' models',cx,cy+5);
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  if(w<0){x+=w;w=-w;}if(h<0){y+=h;h=-h;}
+  r=Math.min(r,w/2,h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+
+/* ══════════════════ REFRESH ALL ══════════════════ */
+function refreshAll(){
+  updateKPIs();
+  updateOvCharts();renderOvTable();
+  updateCotdBanner();
+  // Other tabs rendered on demand when switched to
+}
+
+/* ══════════════════ KPIs + ALERTS ══════════════════ */
+function updateKPIs(){
+  var eligible=D.filter(function(v){return !v.isSafety;});
+  var t=D.length,avg=avgD(eligible),a90=eligible.filter(function(v){return v.days>=90;}).length;
+  var val=D.reduce(function(s,v){return s+v.srp;},0);
+  var nw=D.filter(isNew).length;
+  document.getElementById('kpiTotal').textContent=t;
+  document.getElementById('kpiTotalSub').textContent=nw+' new vehicles';
+  var safetyCnt=D.filter(function(v){return v.isSafety;}).length;
+  document.getElementById('kpiAvg').textContent=safetyCnt;
+  document.getElementById('kpiAvgSub').textContent=safetyCnt?safetyCnt+' unit'+(safetyCnt>1?'s':'')+' cannot be sold':'\u2713 No safety units';
+  document.getElementById('kpi90').textContent=a90;
+  document.getElementById('kpi90Sub').textContent=a90?((a90/t*100).toFixed(0))+'% of inventory critical':'\u2713 None critical';
+  // Car of the Day — oldest available for sale unit (no safety campaign)
+  var sellable=D.filter(function(v){return !v.isSafety&&v.days>0;});
+  if(sellable.length){
+    sellable.sort(function(a,b){return b.days-a.days;});
+    var pick=sellable[0];
+    document.getElementById('cotdModel').textContent=pick.year+' '+pick.model;
+    document.getElementById('cotdSub').textContent=pick.modelFull;
+    document.getElementById('cotdDays').textContent=pick.days+'d on lot';
+    document.getElementById('cotdDays').style.display='inline';
+    document.getElementById('cotdStock').textContent=pick.stock;
+    document.getElementById('cotdStock').style.display='inline';
+    document.getElementById('cotdColor').textContent=pick.color;
+    document.getElementById('cotdColor').style.display='inline';
+  } else {
+    document.getElementById('cotdModel').textContent='No eligible units';
+    document.getElementById('cotdSub').textContent='All units have safety or trade recibido flags';
+  }
+}
+
+function updateAlerts(){
+  var s=document.getElementById('alertStrip');s.innerHTML='';
+  var safety=D.filter(function(v){return v.isSafety;});
+  var a90=D.filter(function(v){return v.days>=90&&!v.isSafety;});
+  var a60=D.filter(function(v){return v.days>=60&&v.days<90;});
+  var receipt=D.filter(function(v){return v.isReceipt;});
+  if(safety.length) s.innerHTML+='<div class="alert">\uD83D\uDED1 '+safety.length+' unit'+(safety.length>1?'s have':'has')+' a Safety Campaign \u2014 cannot be sold</div>';
+  if(a90.length) s.innerHTML+='<div class="alert">\u26A0 '+a90.length+' unit'+(a90.length>1?'s':'')+'aged 90+ days \u2014 price down recommended</div>';
+  if(a60.length) s.innerHTML+='<div class="alert alert-amber">\u25c8 '+a60.length+' unit'+(a60.length>1?'s':'')+' in 60\u201390 day range \u2014 review pricing</div>';
+  if(receipt.length) s.innerHTML+='<div class="alert alert-amber">\u25c8 '+receipt.length+' Trade Recibido'+(receipt.length>1?'s':'')+' on lot</div>';
+  if(!safety.length&&!a90.length&&!a60.length&&D.length) s.innerHTML='<div class="alert alert-green">\u2713 No critical issues \u2014 inventory health looks good</div>';
+}
+
+/* ══════════════════ OVERVIEW CHARTS ══════════════════ */
+function updateOvCharts(){
+  var bkts=[[0,15],[16,30],[31,45],[46,60],[61,90],[91,9999]];
+  var bl=['0-15','16-30','31-45','46-60','61-90','90+'];
+  var nD=bkts.map(function(b){return D.filter(function(v){return !v.isSafety&&v.days>=b[0]&&v.days<=b[1];}).length;});
+  var bktColors=['#22c55e','#4ade80','#a3e635','#eab308','#f97316','#dc2626'];
+  drawBarChart('agingChart',bl,[{data:nD,color:bktColors}]);
+  var bktLabels=['0\u201315 days','16\u201330','31\u201345','46\u201360','61\u201390','90+'];
+  var total=D.length||1;
+  var counts=bkts.map(function(b){return D.filter(function(v){return !v.isSafety&&v.days>=b[0]&&v.days<=b[1];}).length;});
+  var maxC=Math.max.apply(null,counts.concat([1]));
+  document.getElementById('agingBars').innerHTML=bkts.map(function(b,i){
+    return '<div class="arow"><span class="alabel">'+bktLabels[i]+'</span><div class="atrack"><div class="afill" style="width:'+Math.round(counts[i]/maxC*100)+'%;background:'+bktColors[i]+'"></div></div><span class="acount" style="color:'+bktColors[i]+'">'+counts[i]+'</span><span class="apct">'+Math.round(counts[i]/total*100)+'%</span></div>';
+  }).join('');
+}
+
+/* ══════════════════ TABLE BUILDERS ══════════════════ */
+function showTable(emptyId,tblId,hasData,filteredLen,totalLen,titleId,countId,titleText){
+  if(!hasData){
+    document.getElementById(emptyId).style.display='block';
+    document.getElementById(tblId).style.display='none';
+  } else {
+    document.getElementById(emptyId).style.display='none';
+    document.getElementById(tblId).style.display='table';
+  }
+  document.getElementById(titleId).textContent=titleText+' \u2014 '+filteredLen+' unit'+(filteredLen!==1?'s':'');
+  document.getElementById(countId).textContent=totalLen>filteredLen?'Showing '+filteredLen+' of '+totalLen:'';
+}
+
+function makeRow(v,maxD,showType){
+  var tr=document.createElement('tr');
+  tr.className=rowCls(v);
+  var cells='<td><span class="stock-tag">'+v.stock+'</span></td>';
+  cells+='<td><strong style="font-weight:500">'+v.year+' '+v.model+'</strong>'+statusBadge(v)+'<br><span style="font-size:11px;color:var(--muted)">'+v.modelFull+'</span></td>';
+
+  cells+='<td style="color:var(--muted)">'+v.color+'</td>';
+  cells+='<td style="font-family:var(--mono);font-size:12px">'+fmtPrice(v.invoice)+'</td>';
+  cells+='<td style="font-family:var(--mono);font-size:12px">'+fmtPrice(v.srp)+'</td>';
+  cells+='<td><span class="age-pill '+ageCls(v.days)+'">'+ageIcon(v.days)+' '+v.days+'d</span></td>';
+  cells+='<td>'+barHTML(v.days,maxD)+'</td>';
+  cells+='<td>'+actBtn(v.days)+'</td>';
+  tr.innerHTML=cells;
+  return tr;
+}
+
+function renderOvTable(){
+  var ar=(F.ovAge||'0-9999').split('-').map(Number);
+  var q=(document.getElementById('ovSearch').value||'').toLowerCase();
+  var data=D.filter(function(v){
+    var t=isNew(v)||true;
+    var a=v.days>=ar[0]&&v.days<=ar[1];
+    var s=!q||[v.stock,v.model,v.modelFull,v.vin,v.color].join(' ').toLowerCase().indexOf(q)>=0;
+    return t&&a&&s;
+  });
+  data=applySortToData(data,'ov');
+  var maxD=Math.max.apply(null,data.map(function(v){return v.days;}).concat([60]));
+  showTable('ovEmpty','ovTbl',D.length>0,data.length,D.length,'ovTitle','ovCount','All Inventory');
+  var tbody=document.getElementById('ovBody');tbody.innerHTML='';
+  data.forEach(function(v){tbody.appendChild(makeRow(v,maxD,false));});
+}
+
+function updateNCharts(){
+  var nv=D.filter(isNew);
+  var byM={};nv.forEach(function(v){byM[v.model]=(byM[v.model]||0)+1;});
+  var mKeys=Object.keys(byM).sort(function(a,b){return byM[b]-byM[a];}).slice(0,8);
+  drawDonutChart('nMixChart',mKeys,mKeys.map(function(k){return byM[k];}),COLORS);
+  document.getElementById('nMixLeg').innerHTML=mKeys.map(function(k,i){return '<span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><span style="width:10px;height:10px;border-radius:2px;background:'+COLORS[i%COLORS.length]+';display:inline-block"></span>'+k+'</span>';}).join('');
+  var byMD={};nv.forEach(function(v){if(!byMD[v.model])byMD[v.model]={t:0,c:0};byMD[v.model].t+=v.days;byMD[v.model].c++;});
+  var mE=Object.entries(byMD).map(function(e){return{m:e[0],avg:Math.round(e[1].t/e[1].c)};}).sort(function(a,b){return b.avg-a.avg;}).slice(0,8);
+  drawBarChart('nDaysChart',mE.map(function(e){return e.m;}),[{data:mE.map(function(e){return e.avg;}),color:mE.map(function(e){return ageColor(e.avg);})}],{horizontal:true});
+  // KPIs
+  var nvElig=nv.filter(function(v){return !v.isSafety;});
+  var avg=avgD(nvElig),val=nv.reduce(function(s,v){return s+v.srp;},0),a60=nvElig.filter(function(v){return v.days>=60;}).length;
+  document.getElementById('nKpiTotal').textContent=nv.length||'—';
+  document.getElementById('nKpiSub').textContent=nv.length?Object.keys(byM).length+' model codes':'No new vehicles';
+  document.getElementById('nKpiAvg').textContent=nv.length?avg:'—';
+  document.getElementById('nKpiAvgSub').textContent=avg>60?'\u25b2 '+(avg-60)+'d over target':'\u2713 Within 60-day target';
+  document.getElementById('nKpi60').textContent=a60;
+  document.getElementById('nKpi60Sub').textContent=a60?'Review for markdown':'\u2713 None at risk';
+}
+
+function renderNTable(){
+  var ar=F.nAge==='all'?[0,9999]:F.nAge.split('-').map(Number);
+  var q=(document.getElementById('nSearch').value||'').toLowerCase();
+  var data=D.filter(function(v){return isNew(v)&&v.days>=ar[0]&&v.days<=ar[1]&&(!q||[v.stock,v.model,v.modelFull,v.vin].join(' ').toLowerCase().indexOf(q)>=0);}).sort(function(a,b){return b.days-a.days;});
+  var maxD=Math.max.apply(null,data.map(function(v){return v.days;}).concat([60]));
+  showTable('nEmpty','nTbl',D.filter(isNew).length>0,data.length,D.filter(isNew).length,'nTitle','nCount','New Vehicles');
+  var tbody=document.getElementById('nBody');tbody.innerHTML='';
+  data.forEach(function(v){tbody.appendChild(makeRow(v,maxD,false));});
+}
+
+function updateAgCharts(){
+  var bkts=[[0,15],[16,30],[31,45],[46,60],[61,90],[91,9999]];
+  var bl=['0-15','16-30','31-45','46-60','61-90','90+'];
+  var counts=bkts.map(function(b){return D.filter(function(v){return !v.isSafety&&v.days>=b[0]&&v.days<=b[1];}).length;});
+  drawBarChart('agHeatChart',bl,[{data:counts,color:['#22c55e','#4ade80','#2dd4bf','#f59e0b','#fb923c','#ef4444']}]);
+  var a90=D.filter(function(v){return !v.isSafety&&v.days>=90;});
+  var a60=D.filter(function(v){return !v.isSafety&&v.days>=60&&v.days<90;});
+  var agingD=D.filter(function(v){return !v.isSafety;});
+  var oldest=agingD.length?Math.max.apply(null,agingD.map(function(v){return v.days;})):0;
+  var oldestV=agingD.find(function(v){return v.days===oldest;});
+  document.getElementById('agKpi90').textContent=a90.length||'0';
+  document.getElementById('agKpi90Sub').textContent=a90.length?a90.length+' unit'+(a90.length>1?'s need':' needs')+' action':'\u2713 None critical';
+  document.getElementById('agKpi60').textContent=a60.length||'0';
+  document.getElementById('agKpiOldest').textContent=oldest?oldest+'d':'—';
+  document.getElementById('agKpiOldestSub').textContent=oldestV?oldestV.year+' '+oldestV.model+' \xb7 '+oldestV.modelFull:'No data';
+}
+
+function renderAgTable(){
+  var minD=parseInt(F.agMin)||90;
+  var q=(document.getElementById('agSearch').value||'').toLowerCase();
+  var data=D.filter(function(v){
+    var t=true;
+    var a=v.days>=minD&&!v.isSafety;
+    var s=!q||[v.stock,v.model,v.modelFull].join(' ').toLowerCase().indexOf(q)>=0;
+    return t&&a&&s;
+  });
+  data=applySortToData(data,'ag');
+  var hasData=D.length>0;
+  if(!hasData){document.getElementById('agEmpty').style.display='block';document.getElementById('agTbl').style.display='none';}
+  else if(!data.length){
+    document.getElementById('agEmpty').style.display='block';
+    document.getElementById('agEmpty').querySelector('.empty-title').textContent='No units aged '+minD+'+ days';
+    document.getElementById('agEmpty').querySelector('.empty-sub').textContent='Try lowering the threshold';
+    document.getElementById('agEmpty').querySelector('.btn-import').style.display='none';
+    document.getElementById('agTbl').style.display='none';
+  } else {
+    document.getElementById('agEmpty').style.display='none';
+    document.getElementById('agTbl').style.display='table';
+  }
+  document.getElementById('agTitle').textContent=minD+'+ Day Units \u2014 '+data.length+' found';
+  document.getElementById('agCount').textContent='Sorted by most aged';
+  var tbody=document.getElementById('agBody');tbody.innerHTML='';
+  data.forEach(function(v,i){
+    var tr=document.createElement('tr');
+    tr.className=rowCls(v);
+    var rankStyle=i===0?'color:#f87171;font-weight:600':i===1?'color:#fbbf24;font-weight:600':i===2?'color:#fdba74;font-weight:600':'color:var(--muted)';
+    tr.innerHTML='<td style="'+rankStyle+'">'+(i+1)+'</td>'
+      +'<td><span class="stock-tag">'+v.stock+'</span></td>'
+      +'<td><strong style="font-weight:500">'+v.year+' '+v.model+'</strong>'+statusBadge(v)+'<br><span style="font-size:11px;color:var(--muted)">'+v.modelFull+'</span></td>'
+      +'<td style="font-family:var(--mono);font-size:12px">'+fmtPrice(v.invoice)+'</td>'
+      +'<td style="font-family:var(--mono);font-size:12px">'+fmtPrice(v.srp)+'</td>'
+      +'<td><span class="age-pill '+ageCls(v.days)+'">'+ageIcon(v.days)+' '+v.days+'d</span></td>'
+      +'<td>'+actBtn(v.days)+'</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+/* ══════════════════ SELL MODEL ══════════════════ */
+function renderSellModel(){
+  var minDays = parseInt(F.smMin)||0;
+  var q = (document.getElementById('smSearch').value||'').toLowerCase();
+  var excludeSafety = F.smExclude === 'safety';
+
+  // Build model+color groups
+  var groups = {};
+  D.forEach(function(v){
+    if(excludeSafety && v.isSafety) return;
+    var key = v.model + '||' + v.color;
+    if(!groups[key]) groups[key] = {
+      model: v.model,
+      modelFull: v.modelFull,
+      color: v.color,
+      units: [],
+      maxDays: 0,
+      avgDays: 0,
+      hasSafety: false,
+      hasReceipt: false
+    };
+    groups[key].units.push(v);
+    if(v.days > groups[key].maxDays) groups[key].maxDays = v.days;
+    if(v.isSafety) groups[key].hasSafety = true;
+    if(v.isReceipt) groups[key].hasReceipt = true;
+  });
+
+  // Compute avgDays per group
+  Object.values(groups).forEach(function(g){
+    g.avgDays = Math.round(g.units.reduce(function(s,v){return s+v.days;},0)/g.units.length);
+  });
+
+  // Filter
+  var list = Object.values(groups).filter(function(g){
+    var ageOk = g.maxDays >= minDays;
+    var searchOk = !q || (g.model+' '+g.modelFull+' '+g.color).toLowerCase().indexOf(q)>=0;
+    return ageOk && searchOk;
+  });
+
+  // Sort
+  list.sort(function(a,b){
+    if(F.smSort==='count') return b.units.length - a.units.length;
+    return b.maxDays - a.maxDays;
+  });
+
+  // KPIs
+  var oldest = list.length ? list[0] : null;
+  var c60 = list.filter(function(g){return g.maxDays>=60;}).length;
+  var c90 = list.filter(function(g){return g.maxDays>=90;}).length;
+  document.getElementById('smKpiCombos').textContent = list.length || '—';
+  document.getElementById('smKpiCombosSub').textContent = list.length ? 'model · color combinations' : 'No data';
+  document.getElementById('smKpiOldest').textContent = oldest ? oldest.maxDays+'d' : '—';
+  document.getElementById('smKpiOldestSub').textContent = oldest ? oldest.model+' · '+oldest.color : 'No data';
+  document.getElementById('smKpi60').textContent = c60;
+  document.getElementById('smKpi90').textContent = c90;
+
+  // Alerts
+  var alerts = document.getElementById('smAlerts');
+  alerts.innerHTML = '';
+  if(c90>0) alerts.innerHTML += '<div class="alert">⚠ '+c90+' model/color combo'+(c90>1?'s have':' has')+' units 90+ days — price down recommended</div>';
+  if(c60>0&&c90===0) alerts.innerHTML += '<div class="alert alert-amber">◈ '+c60+' combo'+(c60>1?'s':'')+' approaching 90 days — review pricing</div>';
+
+  // Build cards
+  var grid = document.getElementById('smGrid');
+  var empty = document.getElementById('smEmpty');
+
+  if(!D.length || !list.length){
+    empty.style.display = 'block';
+    if(!D.length){
+      empty.querySelector('.empty-title').textContent = 'No data yet';
+      empty.querySelector('.empty-sub').textContent = 'Import inventory to see the sell model view';
+    } else {
+      empty.querySelector('.empty-title').textContent = 'No combos match your filters';
+      empty.querySelector('.empty-sub').textContent = 'Try adjusting the minimum days or search';
+    }
+    // Remove any old cards
+    var old = grid.querySelectorAll('.sm-card');
+    old.forEach(function(el){el.remove();});
+    return;
+  }
+
+  empty.style.display = 'none';
+  var old = grid.querySelectorAll('.sm-card');
+  old.forEach(function(el){el.remove();});
+
+  list.forEach(function(g,idx){
+    var urgency = g.maxDays>=90?'crit':g.maxDays>=60?'warn':'ok';
+    var borderColor = urgency==='crit'?'rgba(34,197,94,.5)':urgency==='warn'?'rgba(245,158,11,.4)':'rgba(249,115,22,.25)';
+    var headerBg = urgency==='crit'?'rgba(34,197,94,.1)':urgency==='warn'?'rgba(245,158,11,.1)':'rgba(235,10,30,.08)';
+    var badgeColor = urgency==='crit'?'#4ade80':urgency==='warn'?'#fbbf24':'#fdba74';
+    var actionLabel = urgency==='crit'?'⚡ Priority Unit':urgency==='warn'?'Review':'Monitor';
+    var actionCls = urgency==='crit'?'act-red':urgency==='warn'?'act-amber':'act-blue';
+    var rankLabel = idx===0?'#1 Priority':idx===1?'#2 Priority':idx===2?'#3 Priority':'';
+
+    // Build unit rows (show top 5 oldest units)
+    var sorted = g.units.slice().sort(function(a,b){return b.days-a.days;});
+    var unitRows = sorted.slice(0,5).map(function(v){
+      var flags = '';
+      if(v.isSafety) flags += '<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:rgba(239,68,68,.2);color:#f87171;margin-left:4px">Safety</span>';
+      if(v.isReceipt) flags += '<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:rgba(245,158,11,.2);color:#fbbf24;margin-left:4px">Trade Recibido</span>';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
+        +'<span style="font-family:var(--mono);font-size:11px;color:var(--muted)">'+v.stock+'</span>'
+        +'<div style="display:flex;align-items:center;gap:4px">'
+        +'<span style="font-size:11px;font-weight:500;color:'+ageColor(v.days)+'">'+v.days+'d</span>'
+        + flags
+        +'</div>'
+        +'</div>';
+    }).join('');
+    var moreCount = sorted.length - 5;
+    if(moreCount>0) unitRows += '<div style="font-size:11px;color:var(--muted);text-align:center;padding:5px 0">+'+moreCount+' more unit'+(moreCount>1?'s':'')+'</div>';
+
+    var card = document.createElement('div');
+    card.className = 'sm-card';
+    card.style.cssText = 'background:var(--surface);border:1px solid '+borderColor+';border-radius:var(--radius);overflow:hidden';
+
+    card.innerHTML =
+      // Header
+      '<div style="background:'+headerBg+';padding:12px 14px;border-bottom:1px solid '+borderColor+'">'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start">'
+          +'<div>'
+            +'<div style="font-size:15px;font-weight:600;color:var(--text)">'+g.model+'</div>'
+            +'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+g.modelFull+'</div>'
+          +'</div>'
+          +(rankLabel?'<span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:'+borderColor+';color:'+badgeColor+'">'+rankLabel+'</span>':'')
+        +'</div>'
+        +'<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'
+          +'<div style="background:var(--surface2);border-radius:6px;padding:5px 10px;text-align:center">'
+            +'<div style="font-size:18px;font-weight:600;color:'+badgeColor+'">'+g.maxDays+'d</div>'
+            +'<div style="font-size:10px;color:var(--muted)">Max age</div>'
+          +'</div>'
+          +'<div style="background:var(--surface2);border-radius:6px;padding:5px 10px;text-align:center">'
+            +'<div style="font-size:18px;font-weight:600;color:var(--text)">'+g.avgDays+'d</div>'
+            +'<div style="font-size:10px;color:var(--muted)">Avg age</div>'
+          +'</div>'
+          +'<div style="background:var(--surface2);border-radius:6px;padding:5px 10px;text-align:center">'
+            +'<div style="font-size:18px;font-weight:600;color:var(--text)">'+g.units.length+'</div>'
+            +'<div style="font-size:10px;color:var(--muted)">Units</div>'
+          +'</div>'
+          +'<div style="background:var(--surface2);border-radius:6px;padding:5px 10px;text-align:center;flex:1;min-width:60px">'
+            +'<div style="font-size:13px;font-weight:600;color:var(--text)">'+g.color+'</div>'
+            +'<div style="font-size:10px;color:var(--muted)">Color</div>'
+          +'</div>'
+        +'</div>'
+      +'</div>'
+      // Unit list
+      +'<div style="padding:8px 14px">'
+        +'<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Stock units</div>'
+        + unitRows
+      +'</div>'
+      // Footer
+      +'<div style="padding:10px 14px;border-top:1px solid rgba(255,255,255,.05);display:flex;justify-content:flex-end">'
+        +'<button class="'+actionCls+'" style="font-size:11px">'+actionLabel+'</button>'
+      +'</div>';
+
+    grid.appendChild(card);
+  });
+}
+
+
+
+/* ══════════════════ MI TURNO HOY ══════════════════ */
+var MT_NAME='';
+
+function startMiTurno(){
+  var name=(document.getElementById('mtNameInput').value||'').trim();
+  if(!name) return;
+  MT_NAME=name;
+  try{localStorage.setItem('mvp_salesperson_name',name);}catch(e){}
+  renderMiTurno();
+}
+
+function renderMiTurno(){
+  if(!MT_NAME) return;
+  document.getElementById('mtSetup').style.display='none';
+  document.getElementById('mtBody').style.display='block';
+
+  var now=new Date();
+  var hour=now.getHours();
+  var greeting=hour<12?'Buenos d\xedas':hour<18?'Buenas tardes':'Buenas noches';
+  document.getElementById('mtHello').textContent=greeting+', '+MT_NAME+' \uD83D\uDC4B';
+  var opts={weekday:'long',year:'numeric',month:'long',day:'numeric'};
+  document.getElementById('mtDateLine').textContent=now.toLocaleDateString('es-PR',opts);
+
+  if(!D.length){
+    document.getElementById('mtPriorityCards').innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0">Importa el inventario para ver tus unidades del d\xeda.</div>';
+    return;
+  }
+
+  var sellable=D.filter(function(v){return !v.isSafety;});
+  var critical=sellable.filter(function(v){return v.days>=90;});
+  var watch=sellable.filter(function(v){return v.days>=60&&v.days<90;});
+  var healthy=sellable.filter(function(v){return v.days<60;});
+  var avg=sellable.length?Math.round(sellable.reduce(function(s,v){return s+v.days;},0)/sellable.length):0;
+
+  // Summary bar
+  document.getElementById('mtSummaryBar').innerHTML=
+    '<div class="mt-sum-card"><div class="mt-sum-val" style="color:#22c55e">'+sellable.length+'</div><div class="mt-sum-label">Disponibles</div></div>'
+   +'<div class="mt-sum-card"><div class="mt-sum-val" style="color:#ef4444">'+critical.length+'</div><div class="mt-sum-label">Cr\xedticas 90+</div></div>'
+   +'<div class="mt-sum-card"><div class="mt-sum-val" style="color:#f59e0b">'+watch.length+'</div><div class="mt-sum-label">En Riesgo 60+</div></div>'
+   +'<div class="mt-sum-card"><div class="mt-sum-val" style="color:var(--accent)">'+avg+'d</div><div class="mt-sum-label">Promedio Lote</div></div>';
+
+  // Build priority groups by model — top 6 most aged model groups
+  var groups={};
+  sellable.forEach(function(v){
+    var k=v.model;
+    if(!groups[k]) groups[k]={model:v.model,modelFull:v.modelFull,units:[],maxDays:0,avgDays:0,minSrp:Infinity,maxSrp:0};
+    groups[k].units.push(v);
+    if(v.days>groups[k].maxDays) groups[k].maxDays=v.days;
+    if(v.srp<groups[k].minSrp) groups[k].minSrp=v.srp;
+    if(v.srp>groups[k].maxSrp) groups[k].maxSrp=v.srp;
+  });
+  Object.values(groups).forEach(function(g){
+    g.avgDays=Math.round(g.units.reduce(function(s,v){return s+v.days;},0)/g.units.length);
+  });
+  var priority=Object.values(groups).sort(function(a,b){return b.maxDays-a.maxDays;}).slice(0,6);
+
+  var container=document.getElementById('mtPriorityCards');
+  container.innerHTML='';
+
+  priority.forEach(function(g,i){
+    var urgency=g.maxDays>=90?'crit':g.maxDays>=60?'warn':'ok';
+    var borderColor=urgency==='crit'?'rgba(239,68,68,.5)':urgency==='warn'?'rgba(245,158,11,.45)':'rgba(249,115,22,.3)';
+    var headerBg=urgency==='crit'?'rgba(239,68,68,.08)':urgency==='warn'?'rgba(245,158,11,.07)':'rgba(235,10,30,.07)';
+    var accentColor=urgency==='crit'?'#f87171':urgency==='warn'?'#fbbf24':'#fdba74';
+    var rankLabel=i===0?'#1 Prioridad':i===1?'#2 Prioridad':i===2?'#3 Prioridad':'';
+    var rankBg=i===0?'rgba(239,68,68,.25)':i===1?'rgba(245,158,11,.2)':i===2?'rgba(249,115,22,.2)':'rgba(255,255,255,.07)';
+    var stocks=g.units.sort(function(a,b){return b.days-a.days;}).slice(0,4).map(function(v){return v.stock;});
+    var priceStr=g.minSrp===g.maxSrp?'$'+g.minSrp.toLocaleString():'$'+g.minSrp.toLocaleString()+' \u2013 $'+g.maxSrp.toLocaleString();
+
+    var card=document.createElement('div');
+    card.className='mt-pcard';
+    card.style.borderColor=borderColor;
+    card.innerHTML=
+      '<div class="mt-pcard-head" style="background:'+headerBg+';border-bottom:1px solid '+borderColor+'">'
+        +'<div>'
+          +'<div style="font-size:11px;color:'+accentColor+';font-weight:600;margin-bottom:3px">'+ageIcon(g.maxDays)+' '+g.maxDays+'d m\xe1x &middot; '+g.avgDays+'d prom</div>'
+          +'<div class="mt-pcard-model">'+g.units[0].year+' '+g.model+'</div>'
+          +'<div class="mt-pcard-full">'+g.modelFull+'</div>'
+        +'</div>'
+        +(rankLabel?'<span class="mt-pcard-rank" style="background:'+rankBg+';color:'+accentColor+'">'+rankLabel+'</span>':'')
+      +'</div>'
+      +'<div class="mt-pcard-body">'
+        +'<div class="mt-stat-row">'
+          +'<div class="mt-stat"><div class="mt-stat-val" style="color:'+accentColor+'">'+g.units.length+'</div><div class="mt-stat-key">Unidades</div></div>'
+          +'<div class="mt-stat"><div class="mt-stat-val" style="font-size:12px;color:#4ade80">'+priceStr+'</div><div class="mt-stat-key">Rango SRP</div></div>'
+        +'</div>'
+        +'<div class="mt-stock-list">'+stocks.map(function(s){return '<span class="mt-stock-tag">'+s+'</span>';}).join('')+(g.units.length>4?'<span class="mt-stock-tag">+' +(g.units.length-4)+' m\xe1s</span>':'')+'</div>'
+      +'</div>';
+    container.appendChild(card);
+  });
+
+  // Tips
+  var tips=[];
+  if(critical.length) tips.push({icon:'&#128308;',title:'Unidades Cr\xedticas',text:critical.length+' unidades llevan 90+ d\xedas. Cualquier venta en estos modelos impacta directamente el floor plan del dealership. Son los primeros que debes presentar.'});
+  if(watch.length) tips.push({icon:'&#128993;',title:'Zona de Riesgo',text:watch.length+' unidades en el rango 60\u201390 d\xedas. Si no se mueven esta semana, entran en la zona cr\xedtica. Men\xed\xf3nalas cuando el cliente est\xe9 entre dos opciones.'});
+  var avgNote=avg>60?'El promedio del lote est\xe1 en '+avg+' d\xedas, por encima del objetivo de 60. Hay presi\xf3n para mover unidades.':'El lote est\xe1 saludable con promedio de '+avg+' d\xedas. Buen momento para cerrar al precio completo.';
+  tips.push({icon:'&#128202;',title:'Estado del Lote',text:avgNote});
+  tips.push({icon:'&#128161;',title:'T\xe1ctica del D\xeda',text:'Cuando el cliente dude entre dos carros, usa el tiempo en lote como argumento: \u201cEste lleva m\xe1s tiempo y podemos ser m\xe1s flexibles en precio.\u201d'});
+
+  document.getElementById('mtTips').innerHTML=tips.map(function(t){
+    return '<div class="mt-tip"><div class="mt-tip-icon">'+t.icon+'</div><div class="mt-tip-title">'+t.title+'</div><div class="mt-tip-text">'+t.text+'</div></div>';
+  }).join('');
+}
+
+/* ══════════════════ CAR OF THE DAY BANNER ══════════════════ */
+function updateCotdBanner(){
+  var sellable=D.filter(function(v){return !v.isSafety&&v.days>0;});
+  if(!sellable.length) return;
+  sellable.sort(function(a,b){return b.days-a.days;});
+  var pick=sellable[0];
+  var banner=document.getElementById('cotdBanner');
+  banner.classList.add('show');
+  document.getElementById('cotdBannerModel').textContent=pick.year+' '+pick.model;
+  document.getElementById('cotdBannerFull').textContent=pick.modelFull;
+  var days=document.getElementById('cotdBannerDays');
+  days.textContent=pick.days+' d\xedas en lote';days.style.display='inline';
+  var stk=document.getElementById('cotdBannerStock');
+  stk.textContent='Stock: '+pick.stock;stk.style.display='inline';
+  var pr=document.getElementById('cotdBannerPrice');
+  pr.textContent='SRP: $'+pick.srp.toLocaleString();pr.style.display='inline';
+  var col=document.getElementById('cotdBannerColor');
+  col.textContent='Color: '+pick.color;col.style.display='inline';
+}
+
+/* ══════════════════ CLIENT SEARCH ══════════════════ */
+var TYPE_KEYWORDS={
+  sedan:['corolla','camry','prius','crown','gr86','avalon'],
+  suv:['rav4','4runner','highlander','venza','sequoia','land cruiser','corolla cross','c-hr','bz4x','crown signia'],
+  truck:['tacoma','tundra','hilux'],
+  hybrid:['hybrid','prime','hv'],
+  coupe:['gr86','coupe','sport','gr corolla'],
+  van:['sienna','van']
+};
+
+function vehicleMatchesType(v,type){
+  if(!type) return true;
+  var name=(v.modelFull+' '+v.model).toLowerCase();
+  var keys=TYPE_KEYWORDS[type]||[];
+  if(type==='hybrid') return keys.some(function(k){return name.indexOf(k)>=0;});
+  return keys.some(function(k){return name.indexOf(k)>=0;});
+}
+
+function runClientSearch(){
+  var type=document.getElementById('csType').value;
+  var maxP=parseFloat(document.getElementById('csMaxPrice').value)||Infinity;
+  var minP=parseFloat(document.getElementById('csMinPrice').value)||0;
+  var yr=parseInt(document.getElementById('csYear').value)||0;
+  var q=(document.getElementById('csSearch').value||'').toLowerCase().trim();
+
+  var results=D.filter(function(v){
+    if(v.isSafety) return false;
+    if(v.srp>maxP) return false;
+    if(v.srp<minP) return false;
+    if(yr&&v.year!==yr) return false;
+    if(!vehicleMatchesType(v,type)) return false;
+    if(q&&(v.modelFull+' '+v.model+' '+v.stock).toLowerCase().indexOf(q)<0) return false;
+    return true;
+  });
+
+  results.sort(function(a,b){return b.days-a.days;});
+
+  var countEl=document.getElementById('csResultCount');
+  countEl.textContent=results.length?results.length+' unidad'+(results.length!==1?'es':'')+ ' encontrada'+(results.length!==1?'s':''):'';
+
+  var grid=document.getElementById('csCards');
+  grid.innerHTML='';
+
+  if(!results.length){
+    grid.innerHTML='<div class="cs-empty-results"><div style="font-size:28px;margin-bottom:8px">&#128663;</div><div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px">Sin resultados</div><div style="font-size:12px">Intenta con otros filtros</div></div>';
+    return;
+  }
+
+  results.forEach(function(v){
+    var inCmp=CMP_LIST.some(function(s){return s.stock===v.stock;});
+    var card=document.createElement('div');
+    card.className='cs-card';
+    var ageDot=v.days>=90?'&#128308;':v.days>=60?'&#128993;':'&#128994;';
+    card.innerHTML=
+      '<div class="cs-card-header">'
+        +'<div class="cs-card-model">'+v.year+' '+v.model+'</div>'
+        +'<div class="cs-card-sub">'+v.modelFull+'</div>'
+      +'</div>'
+      +'<div class="cs-card-body">'
+        +'<div class="cs-card-row"><span class="cs-card-key">Precio SRP</span><span class="cs-card-val" style="color:#4ade80;font-family:var(--mono)">$'+v.srp.toLocaleString()+'</span></div>'
+        +'<div class="cs-card-row"><span class="cs-card-key">Stock #</span><span class="cs-card-val" style="font-family:var(--mono);font-size:11px">'+v.stock+'</span></div>'
+        +'<div class="cs-card-row"><span class="cs-card-key">Color</span><span class="cs-card-val">'+v.color+'</span></div>'
+        +'<div class="cs-card-row"><span class="cs-card-key">D&iacute;as en lote</span><span class="cs-card-val">'+ageDot+' '+v.days+' d&iacute;as</span></div>'
+        +(v.isReceipt?'<div class="cs-card-row"><span class="cs-card-key">Estado</span><span style="font-size:11px;color:#fbbf24">&#9724; Trade Recibido</span></div>':'')
+      +'</div>'
+      +'<div class="cs-card-footer" style="justify-content:flex-end">'
+        +'<button class="cs-add-cmp'+(inCmp?' added':'')+'" id="cmpBtn-'+v.stock+'" style="font-size:11px">'+(inCmp?'&#10003; En comparaci\xf3n':'+ Comparar')+'</button>'
+      +'</div>';
+    // Use addEventListener to avoid quote conflicts with JSON data
+    (function(vehicle){
+      card.querySelector('.cs-add-cmp').addEventListener('click', function(){ toggleComparator(vehicle); });
+    })(v);
+    grid.appendChild(card);
+  });
+}
+
+/* ══════════════════ COMPARATOR ══════════════════ */
+var CMP_LIST=[];
+function toggleComparator(v){
+  var idx=CMP_LIST.findIndex(function(s){return s.stock===v.stock;});
+  if(idx>=0){
+    CMP_LIST.splice(idx,1);
+  } else {
+    if(CMP_LIST.length>=3){alert('M\xe1ximo 3 unidades para comparar');return;}
+    CMP_LIST.push(v);
+  }
+  updateCmpBar();
+  // refresh button state in cards
+  var btn=document.getElementById('cmpBtn-'+v.stock);
+  if(btn){
+    var inCmp=CMP_LIST.some(function(s){return s.stock===v.stock;});
+    btn.className='cs-add-cmp'+(inCmp?' added':'');
+    btn.textContent=inCmp?'\u2713 En comparaci\xf3n':'+ Comparar';
+  }
+}
+
+function updateCmpBar(){
+  var bar=document.getElementById('cmpBar');
+  var pills=document.getElementById('cmpPills');
+  var goBtn=document.getElementById('cmpGoBtn');
+  if(!CMP_LIST.length){bar.classList.remove('visible');return;}
+  bar.classList.add('visible');
+  pills.innerHTML='';
+  CMP_LIST.forEach(function(v){
+    var pill=document.createElement('div');
+    pill.className='cmp-pill';
+    pill.innerHTML=v.year+' '+v.model+'<button class="cmp-pill-x">&#10005;</button>';
+    pill.querySelector('.cmp-pill-x').addEventListener('click',(function(vehicle){
+      return function(){ toggleComparator(vehicle); };
+    })(v));
+    pills.appendChild(pill);
+  });
+  goBtn.textContent='Ver Comparaci\xf3n ('+CMP_LIST.length+'/3)';
+  goBtn.disabled=CMP_LIST.length<2;
+}
+
+function clearComparator(){
+  CMP_LIST=[];
+  updateCmpBar();
+  // Reset all compare buttons
+  document.querySelectorAll('.cs-add-cmp').forEach(function(b){
+    b.className='cs-add-cmp';b.textContent='+ Comparar';
+  });
+}
+
+function openComparator(){
+  if(CMP_LIST.length<2) return;
+  var grid=document.getElementById('cmpGrid');
+  var cols=CMP_LIST.length;
+  grid.style.gridTemplateColumns='repeat('+cols+',1fr)';
+  // Find best values
+  var minPrice=Math.min.apply(null,CMP_LIST.map(function(v){return v.srp;}));
+  var minDays=Math.min.apply(null,CMP_LIST.map(function(v){return v.days;}));
+  var maxDays=Math.max.apply(null,CMP_LIST.map(function(v){return v.days;}));
+  grid.innerHTML=CMP_LIST.map(function(v){
+    var ageDot=v.days>=90?'&#128308;':v.days>=60?'&#128993;':'&#128994;';
+    var priceCls=v.srp===minPrice?'cmp-row-best':'';
+    var daysCls=v.days===minDays?'cmp-row-best':v.days===maxDays?'cmp-row-worst':'';
+    var notes=loadNote(v.stock);
+    return '<div class="cmp-col">'
+      +'<div class="cmp-col-head">'
+        +'<div class="cmp-col-model">'+v.year+' '+v.model+'</div>'
+        +'<div class="cmp-col-sub">'+v.modelFull+'</div>'
+      +'</div>'
+      +'<div class="cmp-row"><span class="cmp-row-key">Precio SRP</span><span class="cmp-row-val '+priceCls+'" style="font-family:var(--mono)">$'+v.srp.toLocaleString()+'</span></div>'
+      +'<div class="cmp-row"><span class="cmp-row-key">Invoice</span><span class="cmp-row-val" style="font-family:var(--mono);color:var(--muted)">$'+v.invoice.toLocaleString()+'</span></div>'
+      +'<div class="cmp-row"><span class="cmp-row-key">Stock #</span><span class="cmp-row-val" style="font-size:11px;font-family:var(--mono)">'+v.stock+'</span></div>'
+      +'<div class="cmp-row"><span class="cmp-row-key">VIN</span><span class="cmp-row-val" style="font-size:10px;font-family:var(--mono)">...'+v.vin.slice(-8)+'</span></div>'
+      +'<div class="cmp-row"><span class="cmp-row-key">Color</span><span class="cmp-row-val">'+v.color+'</span></div>'
+      +'<div class="cmp-row"><span class="cmp-row-key">D&iacute;as en lote</span><span class="cmp-row-val '+daysCls+'">'+ageDot+' '+v.days+'d</span></div>'
+      +'<div class="cmp-row"><span class="cmp-row-key">Safety Campaign</span><span class="cmp-row-val">'+(v.isSafety?'&#128308; S\xed':'&#128994; No')+'</span></div>'
+      +(notes?'<div class="cmp-row" style="flex-direction:column;align-items:flex-start;gap:4px"><span class="cmp-row-key" style="color:#a78bfa">&#128221; Tu nota</span><span style="font-size:12px;color:var(--text);line-height:1.4">'+notes.replace(/</g,'&lt;')+'</span></div>':'')
+    +'</div>';
+  }).join('');
+  document.getElementById('cmpModal').classList.add('open');
+}
+
+function closeCmpModal(){document.getElementById('cmpModal').classList.remove('open');}
+document.getElementById('cmpModal').addEventListener('click',function(e){if(e.target===this)closeCmpModal();});
+
+/* ══════════════════ NOTES (localStorage) ══════════════════ */
+var CURRENT_NOTE_STOCK='';
+function loadNote(stock){
+  try{return localStorage.getItem('mvp_note_'+stock)||'';}catch(e){return '';}
+}
+function saveNoteData(stock,text){
+  try{if(text.trim()){localStorage.setItem('mvp_note_'+stock,text);localStorage.setItem('mvp_note_ts_'+stock,new Date().toLocaleString());}else{localStorage.removeItem('mvp_note_'+stock);localStorage.removeItem('mvp_note_ts_'+stock);}}catch(e){}
+}
+function openNotesModal(stock,label){
+  CURRENT_NOTE_STOCK=stock;
+  document.getElementById('notesModalTitle').textContent='&#128221; Nota &mdash; '+label;
+  var text=loadNote(stock);
+  document.getElementById('notesTextarea').value=text;
+  try{var ts=localStorage.getItem('mvp_note_ts_'+stock);document.getElementById('notesTimestamp').textContent=ts?'Guardado: '+ts:'';}catch(e){}
+  document.getElementById('notesModal').classList.add('open');
+  setTimeout(function(){document.getElementById('notesTextarea').focus();},100);
+}
+function closeNotesModal(){document.getElementById('notesModal').classList.remove('open');CURRENT_NOTE_STOCK='';}
+function saveNote(){
+  var text=document.getElementById('notesTextarea').value;
+  saveNoteData(CURRENT_NOTE_STOCK,text);
+  closeNotesModal();
+  runClientSearch(); // refresh card states
+}
+function deleteNote(){
+  saveNoteData(CURRENT_NOTE_STOCK,'');
+  closeNotesModal();
+  runClientSearch();
+}
+document.getElementById('notesModal').addEventListener('click',function(e){if(e.target===this)closeNotesModal();});
+
+
+/* ══════════════════ MI COMISIÓN ══════════════════ */
+function sortTable(tab, col){
+  if(SORT[tab].col===col){
+    SORT[tab].dir = SORT[tab].dir==='desc'?'asc':'desc';
+  } else {
+    SORT[tab].col=col;
+    SORT[tab].dir='desc';
+  }
+  // Update header classes
+  var tblId = tab==='ag'?'agTbl':tab+'Tbl';
+  var tbl = document.getElementById(tblId);
+  if(tbl){
+    tbl.querySelectorAll('th.sortable').forEach(function(th){
+      th.classList.remove('sort-asc','sort-desc');
+    });
+    var ths = tbl.querySelectorAll('th.sortable');
+    ths.forEach(function(th){
+      if((col==='year'&&th.textContent.indexOf('Year')>=0)||(col==='days'&&th.textContent.indexOf('Days')>=0)){
+        th.classList.add(SORT[tab].dir==='asc'?'sort-asc':'sort-desc');
+      }
+    });
+  }
+  if(tab==='ov') renderOvTable();
+  else if(tab==='n') renderNTable();
+  else if(tab==='u') renderUTable();
+  else if(tab==='ag') renderAgTable();
+}
+
+function applySortToData(data, tab){
+  var col=SORT[tab].col, dir=SORT[tab].dir;
+  return data.slice().sort(function(a,b){
+    var av = col==='year'?a.year:a.days;
+    var bv = col==='year'?b.year:b.days;
+    return dir==='asc'?(av-bv):(bv-av);
+  });
+}
+
+
+</script>
+</body>
+</html>
